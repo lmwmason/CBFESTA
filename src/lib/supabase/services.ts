@@ -106,6 +106,38 @@ export async function getBoothDetail(boothId: number) {
   };
 }
 
+export async function getFestivalById(id: number) {
+  const { data, error } = await requireClient()
+    .from("festivals")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateFestival(
+  id: number,
+  values: TablesUpdate<"festivals">,
+) {
+  const { data, error } = await requireClient()
+    .from("festivals")
+    .update(values)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteAnnouncement(id: number) {
+  const { error } = await requireClient()
+    .from("announcements")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
+}
+
 export async function getAdminCategories(festivalId: number) {
   const { data, error } = await requireClient()
     .from("categories")

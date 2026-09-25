@@ -188,6 +188,8 @@ a { color: inherit; text-decoration: none; }
 .workspace-head p i { display: inline-block; width: 7px; height: 7px; margin-right: 6px; border-radius: 50%; background: var(--success); }
 .workspace-head-actions { display: flex; align-items: center; gap: 9px; }
 .workspace-head-actions svg { width: 16px; }
+.team-size-input { display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 12px; border: 1px solid var(--line); font-size: 11px; color: var(--muted); }
+.team-size-input input { width: 48px; border: 0; outline: 0; font-size: 14px; font-weight: 700; color: var(--ink); background: none; }
 
 .metric-grid { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); background: #fff; }
 .metrics-3 { grid-template-columns: repeat(3, 1fr); }

@@ -32,6 +32,7 @@ export function AdminTeamsPage() {
   );
   const [loading, setLoading] = useState(true);
   const [balancing, setBalancing] = useState(false);
+  const [teamSize, setTeamSize] = useState(0);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -61,6 +62,15 @@ export function AdminTeamsPage() {
     setError("");
     setMessage("");
     try {
+      if (teamSize > 0) {
+        await Promise.all(
+          teams.map((team) =>
+            team.member_capacity === teamSize
+              ? Promise.resolve()
+              : updateTeam(team.id, { member_capacity: teamSize }),
+          ),
+        );
+      }
       const result = await balanceTeams(festivalId);
       setMessage(
         `${result.assigned_count}명 배정 완료 · 미배정 ${result.unassigned_count}명`,
@@ -92,11 +102,23 @@ export function AdminTeamsPage() {
           <span>TEAM SYSTEM</span>
           <h1>팀</h1>
           <p>
-            팀을 만들고 정원을 설정하면 미배정 학생을 자동으로 나눠 배정할 수
-            있어요.
+            팀당 인원을 입력하고 자동 배정하면 해당 인원수로 전체 팀 정원을
+            맞춘 뒤 미배정 학생을 나눠 배정해요. 비워두면 각 팀에 미리 설정된
+            정원을 그대로 사용합니다.
           </p>
         </div>
         <div className="workspace-head-actions">
+          <label className="team-size-input">
+            <span>팀당 인원</span>
+            <input
+              type="number"
+              min={0}
+              max={2000}
+              placeholder="자동"
+              value={teamSize || ""}
+              onChange={(event) => setTeamSize(Number(event.target.value))}
+            />
+          </label>
           <button
             className="secondary-action"
             disabled={balancing}

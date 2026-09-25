@@ -57,7 +57,10 @@ import {
   EditTeamPage,
   NewTeamPage,
 } from "../features/admin/AdminTeamsPage";
+import { AdminFestivalSettingsPage } from "../features/admin/AdminFestivalSettingsPage";
 import { ReportForm } from "../features/reports/ReportSheet";
+import { AdminShell } from "../components/AdminShell";
+import { BoothShell } from "../components/BoothShell";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -625,7 +628,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth"
         element={
           <RoleRoute allow={["owner", "admin", "staff", "booth_operator"]}>
-            <BoothDashboard />
+            <BoothShell><BoothDashboard /></BoothShell>
           </RoleRoute>
         }
       />
@@ -633,7 +636,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth/check-in"
         element={
           <RoleRoute allow={["owner", "admin", "staff", "booth_operator"]}>
-            <BoothDisplaySetupPage />
+            <BoothShell><BoothDisplaySetupPage /></BoothShell>
           </RoleRoute>
         }
       />
@@ -643,7 +646,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth/queue"
         element={
           <RoleRoute allow={["owner", "admin", "staff", "booth_operator"]}>
-            <BoothQueuePage />
+            <BoothShell><BoothQueuePage /></BoothShell>
           </RoleRoute>
         }
       />
@@ -651,7 +654,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth/inventory"
         element={
           <RoleRoute allow={["owner", "admin", "staff", "booth_operator"]}>
-            <BoothInventoryPage />
+            <BoothShell><BoothInventoryPage /></BoothShell>
           </RoleRoute>
         }
       />
@@ -659,7 +662,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth/settings"
         element={
           <RoleRoute allow={["owner", "admin", "booth_operator"]}>
-            <BoothSettingsPage />
+            <BoothShell><BoothSettingsPage /></BoothShell>
           </RoleRoute>
         }
       />
@@ -667,7 +670,15 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
-            <AdminDashboard />
+            <AdminShell><AdminDashboard /></AdminShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/festival"
+        element={
+          <RoleRoute allow={["owner", "admin"]}>
+            <AdminShell><AdminFestivalSettingsPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -675,7 +686,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/categories"
         element={
           <RoleRoute allow={["owner", "admin"]}>
-            <AdminCategoriesPage />
+            <AdminShell><AdminCategoriesPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -683,7 +694,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/categories/new"
         element={
           <RoleRoute allow={["owner", "admin"]}>
-            <NewCategoryPage />
+            <AdminShell><NewCategoryPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -691,7 +702,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/permissions"
         element={
           <RoleRoute allow={["owner", "admin"]}>
-            <AdminPermissionsPage />
+            <AdminShell><AdminPermissionsPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -699,7 +710,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/announcements"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
-            <AdminAnnouncementsPage />
+            <AdminShell><AdminAnnouncementsPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -707,7 +718,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/booths"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
-            <AdminProgramsPage />
+            <AdminShell><AdminProgramsPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -715,19 +726,19 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/booths/new"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
-            <NewProgramPage />
+            <AdminShell><NewProgramPage /></AdminShell>
           </RoleRoute>
         }
       />
-      <Route path="/admin/schedule" element={<RoleRoute allow={["owner", "admin", "staff"]}><AdminSchedulePage /></RoleRoute>} />
-      <Route path="/admin/schedule/new" element={<RoleRoute allow={["owner", "admin", "staff"]}><NewSchedulePage /></RoleRoute>} />
+      <Route path="/admin/schedule" element={<RoleRoute allow={["owner", "admin", "staff"]}><AdminShell><AdminSchedulePage /></AdminShell></RoleRoute>} />
+      <Route path="/admin/schedule/new" element={<RoleRoute allow={["owner", "admin", "staff"]}><AdminShell><NewSchedulePage /></AdminShell></RoleRoute>} />
       <Route path="/admin/programs" element={<Navigate to="/admin/booths" replace />} />
       <Route path="/admin/programs/new" element={<Navigate to="/admin/booths/new" replace />} />
       <Route
         path="/admin/teams"
         element={
           <RoleRoute allow={["owner", "admin"]}>
-            <AdminTeamsPage />
+            <AdminShell><AdminTeamsPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -735,7 +746,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/teams/new"
         element={
           <RoleRoute allow={["owner", "admin"]}>
-            <NewTeamPage />
+            <AdminShell><NewTeamPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -743,7 +754,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/teams/:teamId"
         element={
           <RoleRoute allow={["owner", "admin"]}>
-            <EditTeamPage />
+            <AdminShell><EditTeamPage /></AdminShell>
           </RoleRoute>
         }
       />
@@ -751,7 +762,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/issues"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
-            <AdminIssuesPage />
+            <AdminShell><AdminIssuesPage /></AdminShell>
           </RoleRoute>
         }
       />
