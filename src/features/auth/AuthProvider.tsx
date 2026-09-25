@@ -7,12 +7,13 @@ import {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "../../lib/supabase/client";
-import { AuthContext, type AuthValue, type Membership } from "./auth-context";
+import { AuthContext, type AuthValue, type FestivalRole, type Membership } from "./auth-context";
 const ACTIVE_FESTIVAL_KEY = "cbfesta.activeFestivalId";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [rolesByFestival, setRolesByFestival] = useState<Record<number, FestivalRole[]>>({});
   const [loading, setLoading] = useState(isSupabaseConfigured);
   const [activeFestivalId, setActiveFestivalId] = useState<number | null>(
     () => {
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = await supabase.auth.getUser();
     if (!user) {
       setMemberships([]);
+      setRolesByFestival({});
       return;
     }
     await supabase.from("profiles").upsert(
@@ -40,14 +42,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       { onConflict: "id" },
     );
-    const { data, error } = await supabase
+    const [{ data, error }, { data: roleRows, error: roleError }] = await Promise.all([
+      supabase
       .from("festival_members")
       .select("*, festivals(*)")
       .eq("user_id", user.id)
-      .order("created_at");
-    if (error) throw error;
+      .order("created_at"),
+      supabase.from("festival_member_roles").select("festival_id, role").eq("user_id", user.id),
+    ]);
+    if (error ?? roleError) throw error ?? roleError;
     const next = (data ?? []) as Membership[];
     setMemberships(next);
+    setRolesByFestival((roleRows ?? []).reduce<Record<number, FestivalRole[]>>((all, item) => { (all[item.festival_id] ??= []).push(item.role as FestivalRole); return all; }, {}));
     if (next[0])
       setActiveFestivalId((current) => current ?? next[0].festival_id);
   }, []);
@@ -69,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (_event, next) => {
         setSession(next);
         if (next) void refreshMemberships();
-        else setMemberships([]);
+        else { setMemberships([]); setRolesByFestival({}); }
       },
     );
     return () => listener.subscription.unsubscribe();
@@ -119,11 +125,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
     setSession(null);
     setMemberships([]);
+    setRolesByFestival({});
   };
   const activeMembership =
     memberships.find((item) => item.festival_id === activeFestivalId) ??
     memberships[0] ??
     null;
+  const activeRoles = activeMembership ? rolesByFestival[activeMembership.festival_id] ?? [] : [];
   const value = useMemo<AuthValue>(
     () => ({
       configured: isSupabaseConfigured,
@@ -132,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: session?.user ?? null,
       memberships,
       activeMembership,
+      activeRoles,
       setActiveFestival,
       signIn,
       signUp,
@@ -140,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [
       activeMembership,
+      activeRoles,
       loading,
       memberships,
       session,

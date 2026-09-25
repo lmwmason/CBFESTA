@@ -367,7 +367,7 @@ function RoleRoute({
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   if (
     !auth.activeMembership ||
-    !allow.includes(auth.activeMembership.role as FestivalRole)
+    !auth.activeRoles.some((role) => allow.includes(role as FestivalRole))
   )
     return <Navigate to="/" replace />;
   return children;
