@@ -656,6 +656,7 @@ a.metric.accent:hover { background: #000; }
   .display-qr-frame img, .display-screen .spin { width: min(64vw, 340px); height: auto; }
 }
 .student-checkin { justify-items: center; text-align: center; }
+.student-checkin:has(.checkin-booth-logo) { padding-bottom: 72px; }
 .student-checkin > svg { width: 32px; color: var(--muted); }
 .checkin-target-label { margin: 16px 0 -6px; color: var(--secondary) !important; font-size: 13px; font-weight: 700; }
 .checkin-booth-logo { width: 96px; height: 96px; display: grid; place-items: center; margin: 20px 0 0; overflow: hidden; border: 1px solid var(--line); border-radius: 50%; background: #f5f5f4; color: var(--secondary); }
