@@ -468,6 +468,7 @@ export type Database = {
           created_at: string
           display_name: string
           id: string
+          student_number: string | null
           updated_at: string
         }
         Insert: {
@@ -475,6 +476,7 @@ export type Database = {
           created_at?: string
           display_name: string
           id: string
+          student_number?: string | null
           updated_at?: string
         }
         Update: {
@@ -482,6 +484,7 @@ export type Database = {
           created_at?: string
           display_name?: string
           id?: string
+          student_number?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1005,4 +1008,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

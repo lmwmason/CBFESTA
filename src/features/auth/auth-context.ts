@@ -12,7 +12,8 @@ export type AuthValue = {
   memberships: Membership[];
   activeMembership: Membership | null;
   setActiveFestival: (festivalId: number) => void;
-  sendMagicLink: (email: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (details: { email: string; password: string; name: string; studentNumber: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshMemberships: () => Promise<void>;
 };

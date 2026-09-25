@@ -72,12 +72,10 @@ export async function createQr(input: { festivalId: number; boothId?: number; pr
   return data as { code: string };
 }
 
-export async function joinQueue(boothId: number, userId: string, partySize = 1) {
-  const client = requireClient();
-  const { data: latest } = await client.from('queue_entries').select('queue_number').eq('booth_id', boothId).order('queue_number', { ascending: false }).limit(1).maybeSingle();
-  const { data, error } = await client.from('queue_entries').insert({ booth_id: boothId, user_id: userId, party_size: partySize, queue_number: (latest?.queue_number ?? 0) + 1 }).select().single();
+export async function joinQueue(boothId: number, partySize = 1) {
+  const { data, error } = await requireClient().functions.invoke('operations', { body: { action: 'join-queue', boothId, partySize } });
   if (error) throw error;
-  return data;
+  return data as Tables<'queue_entries'>;
 }
 
 export async function updateQueueEntry(id: number, status: Tables<'queue_entries'>['status']) {

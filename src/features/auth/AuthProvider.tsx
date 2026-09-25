@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!supabase) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setMemberships([]); return; }
-    await supabase.from('profiles').upsert({ id: user.id, display_name: user.user_metadata.full_name ?? user.email?.split('@')[0] ?? '사용자', avatar_url: user.user_metadata.avatar_url ?? null }, { onConflict: 'id' });
+    await supabase.from('profiles').upsert({ id: user.id, display_name: user.user_metadata.full_name ?? user.email?.split('@')[0] ?? '사용자', student_number: user.user_metadata.student_number ?? null, avatar_url: user.user_metadata.avatar_url ?? null }, { onConflict: 'id' });
     const { data, error } = await supabase.from('festival_members').select('*, festivals(*)').eq('user_id', user.id).order('created_at');
     if (error) throw error;
     const next = (data ?? []) as Membership[];
@@ -42,9 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshMemberships]);
 
   const setActiveFestival = (festivalId: number) => { localStorage.setItem(ACTIVE_FESTIVAL_KEY, String(festivalId)); setActiveFestivalId(festivalId); };
-  const sendMagicLink = async (email: string) => { if (!supabase) throw new Error('Supabase 설정이 필요합니다.'); const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: window.location.origin } }); if (error) throw error; };
+  const signIn = useCallback(async (email: string, password: string) => { if (!supabase) throw new Error('Supabase 설정이 필요합니다.'); const { error } = await supabase.auth.signInWithPassword({ email, password }); if (error) throw error; }, []);
+  const signUp = useCallback(async ({ email, password, name, studentNumber }: { email: string; password: string; name: string; studentNumber: string }) => { if (!supabase) throw new Error('Supabase 설정이 필요합니다.'); const { data, error } = await supabase.functions.invoke('register', { body: { email, password, name, studentNumber } }); if (error) throw new Error((data as { error?: string } | null)?.error ?? error.message); await signIn(email, password); }, [signIn]);
   const signOut = async () => { if (!supabase) return; const { error } = await supabase.auth.signOut(); if (error) throw error; setSession(null); setMemberships([]); };
   const activeMembership = memberships.find(item => item.festival_id === activeFestivalId) ?? memberships[0] ?? null;
-  const value = useMemo<AuthValue>(() => ({ configured: isSupabaseConfigured, loading, session, user: session?.user ?? null, memberships, activeMembership, setActiveFestival, sendMagicLink, signOut, refreshMemberships }), [activeMembership, loading, memberships, session, refreshMemberships]);
+  const value = useMemo<AuthValue>(() => ({ configured: isSupabaseConfigured, loading, session, user: session?.user ?? null, memberships, activeMembership, setActiveFestival, signIn, signUp, signOut, refreshMemberships }), [activeMembership, loading, memberships, session, refreshMemberships, signIn, signUp]);
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
