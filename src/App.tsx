@@ -5,13 +5,16 @@ import {
   LogIn,
   Search,
   ShieldCheck,
+  X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
 import type { Tables } from "./lib/supabase/database.types";
 import {
+  getAnnouncements,
   getCurrentFestival,
   getFestivalCatalog,
+  subscribeToFestival,
 } from "./lib/supabase/services";
 import { useAuth } from "./features/auth/auth-context";
 
@@ -47,6 +50,8 @@ export default function App() {
   const auth = useAuth();
   const [festival, setFestival] = useState<Tables<"festivals"> | null>(null);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [announcements, setAnnouncements] = useState<Tables<"announcements">[]>([]);
+  const [tickerDismissed, setTickerDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
@@ -60,7 +65,18 @@ export default function App() {
         const current = membershipFestival ?? (await getCurrentFestival());
         if (cancelled) return;
         setFestival(current);
-        setCatalog(current ? await getFestivalCatalog(current.id) : null);
+        if (current) {
+          const [catalogData, announcementData] = await Promise.all([
+            getFestivalCatalog(current.id),
+            getAnnouncements(current.id),
+          ]);
+          if (cancelled) return;
+          setCatalog(catalogData);
+          setAnnouncements(announcementData);
+        } else {
+          setCatalog(null);
+          setAnnouncements([]);
+        }
       } catch (caught) {
         if (!cancelled)
           setError(
@@ -77,6 +93,13 @@ export default function App() {
       cancelled = true;
     };
   }, [membershipFestival]);
+  useEffect(() => {
+    if (!festival) return;
+    return subscribeToFestival(festival.id, () => {
+      void getFestivalCatalog(festival.id).then(setCatalog);
+      void getAnnouncements(festival.id).then(setAnnouncements);
+    });
+  }, [festival]);
   const booths = useMemo(
     () =>
       (catalog?.booths ?? []).filter((booth) =>
@@ -160,6 +183,17 @@ export default function App() {
           </Link>
         </div>
       </header>
+      {announcements.length > 0 && !tickerDismissed && (
+        <div className="ticker">
+          <b>{announcements[0].priority === "urgent" ? "긴급 공지" : "공지"}</b>
+          {announcements.slice(0, 3).map((item) => (
+            <span key={item.id}>{item.title}</span>
+          ))}
+          <button onClick={() => setTickerDismissed(true)} aria-label="공지 닫기">
+            <X />
+          </button>
+        </div>
+      )}
       <main>
         <section className="festival-hero">
           <div>

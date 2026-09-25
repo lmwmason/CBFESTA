@@ -28,6 +28,7 @@ import {
   getMyQueueEntry,
   joinQueue,
   subscribeToBoothOperations,
+  subscribeToFestival,
 } from "../lib/supabase/services";
 import { AdminDashboard, BoothDashboard } from "../RoleDashboards";
 import { AuthSheet } from "../features/auth/AuthSheet";
@@ -124,6 +125,12 @@ function usePublicCatalog() {
       )
       .finally(() => setLoading(false));
   }, []);
+  useEffect(() => {
+    if (!festival) return;
+    return subscribeToFestival(festival.id, () => {
+      void getFestivalCatalog(festival.id).then(setCatalog);
+    });
+  }, [festival]);
   return { festival, catalog, loading, error };
 }
 function EmptyFestival() {
