@@ -21,6 +21,25 @@ Deno.serve(async (request) => {
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const payload = await request.json();
 
+    if (payload.action === 'preview') {
+      if (typeof payload.code !== 'string' || payload.code.length < 16) return json({ error: 'Invalid QR code' }, 400);
+      const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(payload.code));
+      const tokenHash = Array.from(new Uint8Array(hash), (byte) => byte.toString(16).padStart(2, '0')).join('');
+      const { data, error } = await admin
+        .from('qr_codes')
+        .select('booth_id, program_id, booths(name), programs(title)')
+        .eq('token_hash', tokenHash)
+        .eq('is_active', true)
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+        .maybeSingle();
+      if (error || !data) return json({ error: 'Invalid or expired QR code' }, 400);
+      const targetName = data.booths?.name ?? data.programs?.title;
+      if (!targetName) return json({ error: 'Invalid QR code' }, 400);
+      return json({
+        type: data.booth_id === null ? 'mission' : 'checkin',
+        targetName,
+      });
+    }
     if (payload.action === 'redeem') {
       if (typeof payload.code !== 'string' || payload.code.length < 16) return json({ error: 'Invalid QR code' }, 400);
       const { data, error } = await admin.rpc('redeem_qr_for_actor', { actor: user.id, raw_code: payload.code });

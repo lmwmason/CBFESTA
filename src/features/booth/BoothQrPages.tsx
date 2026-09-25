@@ -6,7 +6,7 @@ import { CheckCircle2, MonitorUp, QrCode, RefreshCw, Store } from "lucide-react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { Tables } from "../../lib/supabase/database.types";
 import { supabase } from "../../lib/supabase/client";
-import { createQr, redeemQr } from "../../lib/supabase/services";
+import { createQr, previewQr, redeemQr } from "../../lib/supabase/services";
 import { useAuth } from "../auth/auth-context";
 
 export function BoothDisplaySetupPage() {
@@ -151,10 +151,11 @@ export function StudentCheckinPage() {
   const [code, setCode] = useState(() => params.get("code"));
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
-  const [state, setState] = useState<"idle" | "checking" | "done" | "error">(
+  const [state, setState] = useState<"idle" | "previewing" | "checking" | "done" | "error">(
     "idle",
   );
   const [message, setMessage] = useState("");
+  const [targetName, setTargetName] = useState("");
   useEffect(() => {
     QrScanner.WORKER_PATH = qrScannerWorkerPath;
     if (code || state !== "idle" || !videoRef.current) return;
@@ -190,6 +191,19 @@ export function StudentCheckinPage() {
       scannerRef.current = null;
     };
   }, [code, setParams, state]);
+  useEffect(() => {
+    if (!code || !user || state !== "idle") return;
+    setState("previewing");
+    void previewQr(code)
+      .then((result) => {
+        setTargetName(result.targetName);
+        setState("idle");
+      })
+      .catch((caught) => {
+        setState("error");
+        setMessage(caught instanceof Error ? caught.message : "QR 정보를 확인하지 못했습니다.");
+      });
+  }, [code, state, user]);
   const checkin = async () => {
     if (!code) return;
     if (!user) {
@@ -222,20 +236,35 @@ export function StudentCheckinPage() {
       )}
       {code && <QrCode />}
       <span>CHECK-IN</span>
-      <h1>
-        {state === "done"
-          ? "완료됐어요!"
-          : code
-            ? "참여를 인증할까요?"
-            : "QR을 스캔해주세요."}
-      </h1>
-      <p>{message || "부스 화면의 QR을 카메라로 비춰주세요."}</p>
-      {state === "idle" && code && (
+      {state === "idle" && code && targetName ? (
+        <>
+          <p className="checkin-target-label">방문할 부스</p>
+          <h1>{targetName}</h1>
+          <p>이 부스를 방문한 것이 맞는지 확인해 주세요.</p>
+          <button className="primary-action" onClick={() => void checkin()}>
+            <CheckCircle2 /> 이 부스 방문 인증하기
+          </button>
+        </>
+      ) : (
+        <>
+          <h1>
+            {state === "done"
+              ? "완료됐어요!"
+              : code
+                ? user
+                  ? "부스 정보를 확인 중이에요."
+                  : "로그인 후 방문을 인증하세요."
+                : "QR을 스캔해주세요."}
+          </h1>
+          <p>{message || "부스 화면의 QR을 카메라로 비춰주세요."}</p>
+        </>
+      )}
+      {state === "idle" && code && !user && (
         <button className="primary-action" onClick={() => void checkin()}>
-          <CheckCircle2 /> 인증하기
+          <CheckCircle2 /> 로그인하고 인증하기
         </button>
       )}
-      {state === "checking" && <p>인증 중…</p>}
+      {(state === "previewing" || state === "checking") && <p>확인 중…</p>}
       {state === "done" && (
         <Link className="secondary-action" to="/">
           축제로 돌아가기
@@ -247,6 +276,9 @@ export function StudentCheckinPage() {
           onClick={() => {
             setState("idle");
             setMessage("");
+            setTargetName("");
+            setCode(null);
+            setParams({}, { replace: true });
           }}
         >
           <RefreshCw /> 다시 시도

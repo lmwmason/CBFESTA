@@ -138,6 +138,39 @@ export async function getMyVisitedBoothIds(festivalId: number, userId: string) {
   return new Set((data ?? []).map((checkin) => checkin.booth_id));
 }
 
+export type BoothTrafficBucket = {
+  startsAt: Date;
+  visits: number;
+  reservations: number;
+};
+
+export async function getBoothTraffic(boothId: number): Promise<BoothTrafficBucket[]> {
+  const client = requireClient();
+  const startsAt = new Date();
+  startsAt.setMinutes(0, 0, 0);
+  startsAt.setHours(startsAt.getHours() - 23);
+  const from = startsAt.toISOString();
+  const [checkins, reservations] = await Promise.all([
+    client.from("checkins").select("checked_in_at").eq("booth_id", boothId).gte("checked_in_at", from),
+    client.from("queue_entries").select("joined_at, party_size").eq("booth_id", boothId).gte("joined_at", from),
+  ]);
+  if (checkins.error ?? reservations.error) throw checkins.error ?? reservations.error;
+
+  const buckets = Array.from({ length: 24 }, (_, index) => ({
+    startsAt: new Date(startsAt.getTime() + index * 3_600_000), visits: 0, reservations: 0,
+  }));
+  const bucketIndex = (value: string) => Math.floor((new Date(value).getTime() - startsAt.getTime()) / 3_600_000);
+  for (const checkin of checkins.data ?? []) {
+    const index = bucketIndex(checkin.checked_in_at);
+    if (index >= 0 && index < buckets.length) buckets[index].visits += 1;
+  }
+  for (const reservation of reservations.data ?? []) {
+    const index = bucketIndex(reservation.joined_at);
+    if (index >= 0 && index < buckets.length) buckets[index].reservations += reservation.party_size;
+  }
+  return buckets;
+}
+
 export async function rateBooth(boothId: number, userId: string, stars: number) {
   const { error } = await requireClient()
     .from("booth_ratings")
@@ -471,6 +504,14 @@ export async function redeemQr(code: string) {
     points: number;
     team_id: number | null;
   };
+}
+
+export async function previewQr(code: string) {
+  const { data, error } = await requireClient().functions.invoke("qr", {
+    body: { action: "preview", code },
+  });
+  if (error) throw error;
+  return data as { type: "checkin" | "mission"; targetName: string };
 }
 
 export async function createQr(input: {

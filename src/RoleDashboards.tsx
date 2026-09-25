@@ -26,6 +26,7 @@ import {
   getBoothCurrencyLeaderboard,
   getBoothQueue,
   getBoothRatingSummary,
+  getBoothTraffic,
   getPersonalLeaderboard,
   purchaseBoothAd,
   readImageDimensions,
@@ -81,6 +82,7 @@ export function BoothDashboard() {
   const [adMinutes, setAdMinutes] = useState(30);
   const [adSettings, setAdSettings] = useState({ ratePerMinute: 1, maxMinutes: 240 });
   const [adBusy, setAdBusy] = useState(false);
+  const [traffic, setTraffic] = useState<Awaited<ReturnType<typeof getBoothTraffic>>>([]);
 
   const loadAds = useCallback(async (boothId: number) => {
     try {
@@ -134,6 +136,14 @@ export function BoothDashboard() {
     }
   }, []);
 
+  const loadTraffic = useCallback(async (boothId: number) => {
+    try {
+      setTraffic(await getBoothTraffic(boothId));
+    } catch {
+      // Supplementary data; the live queue stays usable if it cannot load.
+    }
+  }, []);
+
   useEffect(() => {
     if (!supabase || !userId) return;
     void (async () => {
@@ -158,6 +168,7 @@ export function BoothDashboard() {
       setCheckinCount(checkins ?? 0);
       if (boothData) {
         await loadQueue(boothData.id);
+        await loadTraffic(boothData.id);
         await loadAds(boothData.id);
         const { data: festivalData } = await supabase
           .from("festivals")
@@ -174,12 +185,15 @@ export function BoothDashboard() {
       }
       setLoading(false);
     })();
-  }, [userId, loadQueue, loadAds]);
+  }, [userId, loadQueue, loadAds, loadTraffic]);
 
   useEffect(() => {
     if (!booth) return;
-    return subscribeToBoothOperations(booth.id, () => void loadQueue(booth.id));
-  }, [booth, loadQueue]);
+    return subscribeToBoothOperations(booth.id, () => {
+      void loadQueue(booth.id);
+      void loadTraffic(booth.id);
+    });
+  }, [booth, loadQueue, loadTraffic]);
 
   const changeStatus = async (status: Tables<"booths">["status"]) => {
     if (!booth || status === booth.status) return;
@@ -273,6 +287,32 @@ export function BoothDashboard() {
               : "별점을 받으면 코인이 쌓여요"
           }
         />
+      </section>
+      <section className="traffic-card" aria-labelledby="traffic-title">
+        <header>
+          <div>
+            <span>TRAFFIC</span>
+            <h2 id="traffic-title">시간대별 방문 현황</h2>
+          </div>
+          <p><i className="traffic-visits" /> 방문 인증 <i className="traffic-reservations" /> 예약 인원</p>
+        </header>
+        {traffic.length > 0 ? (
+          <div className="traffic-chart" role="img" aria-label="최근 24시간의 방문 인증 및 예약 인원 그래프">
+            {traffic.map((bucket, index) => {
+              const max = Math.max(1, ...traffic.flatMap(({ visits, reservations }) => [visits, reservations]));
+              const label = new Intl.DateTimeFormat("ko-KR", { hour: "numeric" }).format(bucket.startsAt);
+              return (
+                <div className="traffic-column" key={bucket.startsAt.toISOString()}>
+                  <div className="traffic-bars" title={`${label}: 방문 ${bucket.visits}명, 예약 ${bucket.reservations}명`}>
+                    <i className="traffic-visits" style={{ height: `${(bucket.visits / max) * 100}%` }} />
+                    <i className="traffic-reservations" style={{ height: `${(bucket.reservations / max) * 100}%` }} />
+                  </div>
+                  {index % 4 === 0 && <small>{label}</small>}
+                </div>
+              );
+            })}
+          </div>
+        ) : <p className="traffic-empty">방문 및 예약 기록을 불러오는 중이에요.</p>}
       </section>
       <section className="ad-card">
         <div className="ad-card-head">
