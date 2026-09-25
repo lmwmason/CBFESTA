@@ -4,7 +4,6 @@ import {
   Hash,
   IdCard,
   LockKeyhole,
-  LogOut,
   UserRound,
   GraduationCap,
   X,
@@ -13,15 +12,11 @@ import { motion } from "motion/react";
 import { useAuth } from "./auth-context";
 
 export function AuthSheet({ onClose }: { onClose?: () => void }) {
-  const {
-    signIn,
-    signUp,
-    user,
-    memberships,
-    activeMembership,
-    setActiveFestival,
-    signOut,
-  } = useAuth();
+  // Only ever rendered for signed-out visitors — LoginPage redirects an
+  // already-authenticated user away before this mounts. Account actions
+  // (sign out, switch festival, jump to workspace) live in the header's
+  // AccountMenu dropdown instead.
+  const { signIn, signUp } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [form, setForm] = useState({
     id: "",
@@ -53,55 +48,6 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
       );
     }
   };
-  if (user)
-    return (
-      <motion.section
-        className="auth-sheet"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        onClick={(event) => event.stopPropagation()}
-      >
-        {onClose && (
-          <button className="sheet-close" onClick={onClose}>
-            <X />
-          </button>
-        )}
-        <span>MY ACCOUNT</span>
-        <h2>{user.user_metadata.full_name ?? user.user_metadata.login_id}</h2>
-        <p>
-          {user.user_metadata.student_number
-            ? `${user.user_metadata.student_number} · `
-            : ""}
-          {user.user_metadata.login_id ?? user.email?.split("@")[0]}
-        </p>
-        {memberships.length > 0 && (
-          <label className="account-festival">
-            <span>현재 축제</span>
-            <select
-              value={activeMembership?.festival_id}
-              onChange={(event) =>
-                setActiveFestival(Number(event.target.value))
-              }
-            >
-              {memberships.map((item) => (
-                <option key={item.festival_id} value={item.festival_id}>
-                  {item.festivals?.name} · {item.role}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-        <button
-          className="secondary-action signout-button"
-          onClick={async () => {
-            await signOut();
-            onClose?.();
-          }}
-        >
-          <LogOut /> 로그아웃
-        </button>
-      </motion.section>
-    );
   return (
     <motion.section
       className="auth-sheet"
@@ -171,23 +117,25 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
                   </select>
                 </div>
               </label>
-              <label>
-                <span>학번</span>
-                <div>
-                  <Hash />
-                  <input
-                    autoComplete="off"
-                    required
-                    pattern="[1-9][0-9]{3}"
-                    value={form.studentNumber}
-                    onChange={(event) =>
-                      setForm({ ...form, studentNumber: event.target.value })
-                    }
-                    placeholder="2309"
-                  />
-                </div>
-              </label>
             </div>
+          )}
+          {mode === "signup" && (
+            <label>
+              <span>학번</span>
+              <div>
+                <Hash />
+                <input
+                  autoComplete="off"
+                  required
+                  pattern="[1-9][0-9]{3}"
+                  value={form.studentNumber}
+                  onChange={(event) =>
+                    setForm({ ...form, studentNumber: event.target.value })
+                  }
+                  placeholder="2309"
+                />
+              </div>
+            </label>
           )}
           <label>
             <span>아이디</span>

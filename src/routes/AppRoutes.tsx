@@ -6,6 +6,8 @@ import {
   CalendarDays,
   ChevronRight,
   MapPin,
+  Minus,
+  Plus,
   Search,
   Store,
   Users,
@@ -60,7 +62,7 @@ import {
 } from "../features/admin/AdminTeamsPage";
 import { AdminFestivalSettingsPage } from "../features/admin/AdminFestivalSettingsPage";
 import { getCategoryIcon, getKindIcon } from "../lib/categoryIcons";
-import { roleRoute } from "../lib/roleRoute";
+import { AccountMenu } from "../components/AccountMenu";
 import { ReportForm } from "../features/reports/ReportSheet";
 import { AdminShell } from "../components/AdminShell";
 import { BoothShell } from "../components/BoothShell";
@@ -68,7 +70,6 @@ import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
 function Header() {
-  const { user, activeMembership } = useAuth();
   return (
     <header className="route-header">
       <Link to="/">
@@ -84,10 +85,10 @@ function Header() {
         <Link to="/teams">TEAMS</Link>
         <Link to="/map">MAP</Link>
         <Link to="/report">REPORT</Link>
-        <Link to={user ? roleRoute(activeMembership?.role) : "/login"}>
-          ACCOUNT
-        </Link>
       </nav>
+      <div className="header-tools">
+        <AccountMenu />
+      </div>
     </header>
   );
 }
@@ -157,8 +158,14 @@ function LoginPage() {
   const navigate = useNavigate();
   const next = params.get("next");
   useEffect(() => {
-    if (user && next) navigate(next, { replace: true });
+    // Account actions (sign out, switch festival, jump to workspace) now
+    // live in the header's AccountMenu dropdown everywhere, so this page
+    // only has a reason to exist for signed-out visitors and for the
+    // post-login ?next= redirect — never leave an already-signed-in user
+    // parked here.
+    if (user) navigate(next ?? "/", { replace: true });
   }, [user, next, navigate]);
+  if (user) return null;
   return (
     <main className="auth-page">
       <Link className="page-back" to="/">
@@ -448,6 +455,7 @@ function BoothDetailPage() {
   );
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
+  const [partySize, setPartySize] = useState(1);
   const [error, setError] = useState("");
 
   const refresh = useCallback(async () => {
@@ -491,7 +499,7 @@ function BoothDetailPage() {
     setJoining(true);
     setError("");
     try {
-      await joinQueue(id);
+      await joinQueue(id, partySize);
       await refresh();
     } catch (caught) {
       setError(
@@ -555,19 +563,42 @@ function BoothDetailPage() {
               <span>MY QUEUE</span>
               <strong>{myQueue.queue_number}번</strong>
               <p>
+                {myQueue.party_size > 1 ? `${myQueue.party_size}명 · ` : ""}
                 {myQueue.status === "called"
                   ? "지금 호출됐어요! 부스로 와주세요."
                   : "대기 중이에요. 순서가 되면 알려드릴게요."}
               </p>
             </>
-          ) : booth.status === "open" ? (
-            <button
-              className="primary-action"
-              onClick={() => void join()}
-              disabled={joining}
-            >
-              <Users /> {joining ? "접수 중…" : "줄서기"}
-            </button>
+          ) : booth.status === "open" && booth.queue_enabled ? (
+            <>
+              <label className="party-size-field">
+                <span>같이 줄 설 인원</span>
+                <span className="party-size-stepper">
+                  <button
+                    type="button"
+                    onClick={() => setPartySize((n) => Math.max(1, n - 1))}
+                    disabled={partySize <= 1}
+                  >
+                    <Minus />
+                  </button>
+                  <b>{partySize}명</b>
+                  <button
+                    type="button"
+                    onClick={() => setPartySize((n) => Math.min(20, n + 1))}
+                    disabled={partySize >= 20}
+                  >
+                    <Plus />
+                  </button>
+                </span>
+              </label>
+              <button
+                className="primary-action"
+                onClick={() => void join()}
+                disabled={joining}
+              >
+                <Users /> {joining ? "접수 중…" : "줄서기"}
+              </button>
+            </>
           ) : (
             <p>지금은 줄서기를 받지 않는 부스예요.</p>
           )}

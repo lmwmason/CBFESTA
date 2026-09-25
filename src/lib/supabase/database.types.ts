@@ -116,6 +116,7 @@ export type Database = {
           name: string;
           offerings: Json;
           operating_hours: Json;
+          queue_enabled: boolean;
           queue_size: number;
           settings: Json;
           short_description: string | null;
@@ -137,6 +138,7 @@ export type Database = {
           name: string;
           offerings?: Json;
           operating_hours?: Json;
+          queue_enabled?: boolean;
           queue_size?: number;
           settings?: Json;
           short_description?: string | null;
@@ -158,6 +160,7 @@ export type Database = {
           name?: string;
           offerings?: Json;
           operating_hours?: Json;
+          queue_enabled?: boolean;
           queue_size?: number;
           settings?: Json;
           short_description?: string | null;

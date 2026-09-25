@@ -21,6 +21,7 @@ export function BoothSettingsPage() {
     accent_color: "#f52a9a",
     status: "draft",
     estimated_wait_minutes: 0,
+    queue_enabled: true,
   });
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export function BoothSettingsPage() {
           accent_color: item.accent_color,
           status: item.status,
           estimated_wait_minutes: item.estimated_wait_minutes,
+          queue_enabled: item.queue_enabled,
         });
       });
   }, [user]);
@@ -206,6 +208,19 @@ export function BoothSettingsPage() {
               })
             }
           />
+        </label>
+        <label>
+          <span>줄서기 받기</span>
+          <select
+            value={form.queue_enabled ? "on" : "off"}
+            onChange={(e) =>
+              setForm({ ...form, queue_enabled: e.target.value === "on" })
+            }
+          >
+            <option value="on">받는 중</option>
+            <option value="off">잠시 중단</option>
+          </select>
+          <small>중단하면 운영 상태와 별개로 학생이 줄서기 버튼을 볼 수 없어요.</small>
         </label>
         <label>
           <span>대표 색상</span>

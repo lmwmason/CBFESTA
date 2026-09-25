@@ -1,12 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import {
-  ArrowRight,
-  CalendarDays,
-  LogIn,
-  Search,
-  ShieldCheck,
-  X,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, LogIn, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
 import type { Tables } from "./lib/supabase/database.types";
@@ -19,6 +12,7 @@ import {
 import { useAuth } from "./features/auth/auth-context";
 import { getCategoryIcon } from "./lib/categoryIcons";
 import { roleRoute } from "./lib/roleRoute";
+import { AccountMenu } from "./components/AccountMenu";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
 function Brand() {
@@ -157,24 +151,7 @@ export default function App() {
           <Link to="/report">REPORT</Link>
         </nav>
         <div className="header-tools">
-          <Link
-            className="login-button"
-            to={auth.user ? roleRoute(role) : "/login"}
-          >
-            {auth.user ? (
-              <>
-                <ShieldCheck />
-                <span className="account-label">
-                  <small>{role === "admin" || role === "owner" ? "ADMIN" : role === "booth_operator" ? "BOOTH DESK" : "MY ACCOUNT"}</small>
-                  <b>{auth.user.user_metadata.full_name ?? "내 공간"}</b>
-                </span>
-              </>
-            ) : (
-              <>
-                <LogIn /> 로그인
-              </>
-            )}
-          </Link>
+          <AccountMenu />
         </div>
       </header>
       {announcements.length > 0 && !tickerDismissed && (
