@@ -129,6 +129,31 @@ export async function updateMemberRole(
   return data;
 }
 
+export async function getFestivalMembers(festivalId: number) {
+  const client = requireClient();
+  const { data: members, error } = await client
+    .from("festival_members")
+    .select("*")
+    .eq("festival_id", festivalId)
+    .order("created_at");
+  if (error) throw error;
+  const ids = (members ?? []).map((member) => member.user_id);
+  const { data: profiles, error: profileError } = ids.length
+    ? await client
+        .from("profiles")
+        .select("id, display_name, student_number")
+        .in("id", ids)
+    : { data: [], error: null };
+  if (profileError) throw profileError;
+  const profileById = new Map(
+    (profiles ?? []).map((profile) => [profile.id, profile]),
+  );
+  return (members ?? []).map((member) => ({
+    ...member,
+    profile: profileById.get(member.user_id) ?? null,
+  }));
+}
+
 export async function signInWithEmail(email: string) {
   const { data, error } = await requireClient().auth.signInWithOtp({
     email,

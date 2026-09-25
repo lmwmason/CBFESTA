@@ -26,6 +26,7 @@ import {
   AdminCategoriesPage,
   NewCategoryPage,
 } from "../features/admin/AdminCategoriesPage";
+import { AdminPermissionsPage } from "../features/admin/AdminPermissionsPage";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -432,7 +433,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/permissions"
         element={
           <RoleRoute allow={["owner", "admin"]}>
-            <UnavailablePage eyebrow="ACCESS" title="사용자 권한" />
+            <AdminPermissionsPage />
           </RoleRoute>
         }
       />
