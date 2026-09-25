@@ -21,6 +21,8 @@ export function AdminFestivalSettingsPage() {
     is_public: false,
     starts_at: "",
     ends_at: "",
+    ad_rate_per_minute: 1,
+    ad_max_minutes: 240,
   });
 
   useEffect(() => {
@@ -34,6 +36,8 @@ export function AdminFestivalSettingsPage() {
           is_public: item.is_public,
           starts_at: toDateInput(item.starts_at),
           ends_at: toDateInput(item.ends_at),
+          ad_rate_per_minute: item.ad_rate_per_minute,
+          ad_max_minutes: item.ad_max_minutes,
         });
       })
       .catch((caught) =>
@@ -56,6 +60,8 @@ export function AdminFestivalSettingsPage() {
         is_public: form.is_public,
         starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
         ends_at: form.ends_at ? new Date(form.ends_at).toISOString() : null,
+        ad_rate_per_minute: form.ad_rate_per_minute,
+        ad_max_minutes: form.ad_max_minutes,
       });
       setFestival(updated);
       await refreshMemberships();
@@ -137,6 +143,32 @@ export function AdminFestivalSettingsPage() {
               value={form.ends_at}
               onChange={(event) => setForm({ ...form, ends_at: event.target.value })}
             />
+          </label>
+          <label>
+            <span>부스 광고 요금 (분당 코인)</span>
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              value={form.ad_rate_per_minute}
+              onChange={(event) =>
+                setForm({ ...form, ad_rate_per_minute: Number(event.target.value) })
+              }
+            />
+            <small>부스가 광고를 살 때 1분당 소모되는 코인 수입니다.</small>
+          </label>
+          <label>
+            <span>부스 광고 최대 시간 (분)</span>
+            <input
+              type="number"
+              min={1}
+              max={1440}
+              value={form.ad_max_minutes}
+              onChange={(event) =>
+                setForm({ ...form, ad_max_minutes: Number(event.target.value) })
+              }
+            />
+            <small>한 번에 살 수 있는 광고 노출 시간의 최대값입니다.</small>
           </label>
           {error && <p className="form-error">{error}</p>}
           <footer>

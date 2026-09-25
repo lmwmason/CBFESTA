@@ -439,6 +439,8 @@ export type Database = {
       festivals: {
         Row: {
           accent_color: string
+          ad_max_minutes: number
+          ad_rate_per_minute: number
           created_at: string
           created_by: string
           ends_at: string | null
@@ -458,6 +460,8 @@ export type Database = {
         }
         Insert: {
           accent_color?: string
+          ad_max_minutes?: number
+          ad_rate_per_minute?: number
           created_at?: string
           created_by: string
           ends_at?: string | null
@@ -477,6 +481,8 @@ export type Database = {
         }
         Update: {
           accent_color?: string
+          ad_max_minutes?: number
+          ad_rate_per_minute?: number
           created_at?: string
           created_by?: string
           ends_at?: string | null
@@ -1046,6 +1052,15 @@ export type Database = {
         Returns: string
       }
       ensure_participant_membership: { Args: never; Returns: number }
+      get_personal_leaderboard: {
+        Args: { target_festival_id: number }
+        Returns: {
+          avatar_url: string | null
+          display_name: string
+          score: number
+          user_id: string
+        }[]
+      }
       join_queue_for_actor: {
         Args: {
           actor: string
@@ -1080,7 +1095,7 @@ export type Database = {
         }[]
       }
       purchase_booth_ad: {
-        Args: { hours: number; image_url?: string; target_booth_id: number }
+        Args: { image_url?: string; minutes: number; target_booth_id: number }
         Returns: {
           booth_id: number
           cost: number

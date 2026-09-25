@@ -75,7 +75,8 @@ export function BoothDashboard() {
   const [error, setError] = useState("");
   const [ads, setAds] = useState<Tables<"booth_ads">[]>([]);
   const [rating, setRating] = useState<{ average: number; count: number } | null>(null);
-  const [adHours, setAdHours] = useState(1);
+  const [adMinutes, setAdMinutes] = useState(30);
+  const [adSettings, setAdSettings] = useState({ ratePerMinute: 1, maxMinutes: 240 });
   const [adBusy, setAdBusy] = useState(false);
 
   const loadAds = useCallback(async (boothId: number) => {
@@ -103,7 +104,7 @@ export function BoothDashboard() {
         );
       }
       const imageUrl = await uploadBoothAdImage(booth.festival_id, booth.id, file);
-      await purchaseBoothAd(booth.id, adHours, imageUrl);
+      await purchaseBoothAd(booth.id, adMinutes, imageUrl);
       const updated = await supabase!
         .from("booths")
         .select("*")
@@ -155,6 +156,18 @@ export function BoothDashboard() {
       if (boothData) {
         await loadQueue(boothData.id);
         await loadAds(boothData.id);
+        const { data: festivalData } = await supabase
+          .from("festivals")
+          .select("ad_rate_per_minute, ad_max_minutes")
+          .eq("id", boothData.festival_id)
+          .single();
+        if (festivalData) {
+          setAdSettings({
+            ratePerMinute: festivalData.ad_rate_per_minute,
+            maxMinutes: festivalData.ad_max_minutes,
+          });
+          setAdMinutes((current) => Math.min(current, festivalData.ad_max_minutes));
+        }
       }
       setLoading(false);
     })();
@@ -263,25 +276,31 @@ export function BoothDashboard() {
           <Megaphone />
           <div>
             <b>부스 광고</b>
-            <small>코인으로 원하는 시간만큼 홈 화면에 광고를 띄워요. 시간당 10코인.</small>
+            <small>
+              코인으로 원하는 시간만큼 홈 화면에 광고를 띄워요. 분당{" "}
+              {adSettings.ratePerMinute}코인 · 최대 {adSettings.maxMinutes}분.
+            </small>
           </div>
         </div>
         <div className="ad-card-buy">
           <input
             type="number"
             min={1}
-            max={24}
-            value={adHours}
-            onChange={(event) => setAdHours(Number(event.target.value))}
+            max={adSettings.maxMinutes}
+            value={adMinutes}
+            onChange={(event) => setAdMinutes(Number(event.target.value))}
           />
           <span>
-            시간 · {adHours * 10}코인 · 이미지 {AD_BANNER_WIDTH}×{AD_BANNER_HEIGHT}px
+            분 · {adMinutes * adSettings.ratePerMinute}코인 · 이미지{" "}
+            {AD_BANNER_WIDTH}×{AD_BANNER_HEIGHT}px
           </span>
           <label className="secondary-action ad-card-upload">
             <input
               type="file"
               accept="image/png,image/jpeg,image/webp"
-              disabled={adBusy || booth.ad_currency < adHours * 10}
+              disabled={
+                adBusy || booth.ad_currency < adMinutes * adSettings.ratePerMinute
+              }
               onChange={(event) => {
                 const file = event.target.files?.[0];
                 event.target.value = "";

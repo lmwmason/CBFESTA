@@ -162,14 +162,33 @@ export async function getBoothAds(boothId: number) {
 
 export async function purchaseBoothAd(
   boothId: number,
-  hours: number,
+  minutes: number,
   imageUrl: string,
 ) {
   const { data, error } = await requireClient().rpc("purchase_booth_ad", {
     target_booth_id: boothId,
-    hours,
+    minutes,
     image_url: imageUrl,
   });
+  if (error) throw error;
+  return data;
+}
+
+export async function getPersonalLeaderboard(festivalId: number) {
+  const { data, error } = await requireClient().rpc(
+    "get_personal_leaderboard",
+    { target_festival_id: festivalId },
+  );
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getBoothCurrencyLeaderboard(festivalId: number) {
+  const { data, error } = await requireClient()
+    .from("booths")
+    .select("id, name, logo_url, accent_color, ad_currency")
+    .eq("festival_id", festivalId)
+    .order("ad_currency", { ascending: false });
   if (error) throw error;
   return data;
 }
