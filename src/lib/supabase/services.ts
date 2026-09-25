@@ -506,14 +506,6 @@ export async function redeemQr(code: string) {
   };
 }
 
-export async function previewQr(code: string) {
-  const { data, error } = await requireClient().functions.invoke("qr", {
-    body: { action: "preview", code },
-  });
-  if (error) throw error;
-  return data as { type: "checkin" | "mission"; targetName: string };
-}
-
 export async function createQr(input: {
   festivalId: number;
   boothId?: number;

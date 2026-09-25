@@ -6,7 +6,7 @@ import { CheckCircle2, MonitorUp, QrCode, RefreshCw, Store } from "lucide-react"
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { Tables } from "../../lib/supabase/database.types";
 import { supabase } from "../../lib/supabase/client";
-import { createQr, previewQr, redeemQr } from "../../lib/supabase/services";
+import { createQr, redeemQr } from "../../lib/supabase/services";
 import { useAuth } from "../auth/auth-context";
 
 export function BoothDisplaySetupPage() {
@@ -78,7 +78,7 @@ export function BoothDisplayPage() {
   useEffect(() => {
     if (!code) return;
     void QRCode.toDataURL(
-      `${window.location.origin}/check-in?code=${encodeURIComponent(code)}`,
+      `${window.location.origin}/check-in?code=${encodeURIComponent(code)}&booth=${encodeURIComponent(booth?.name ?? "부스")}`,
       {
         width: 640,
         margin: 1,
@@ -86,7 +86,7 @@ export function BoothDisplayPage() {
         color: { dark: "#121212", light: "#00000000" },
       },
     ).then(setImage);
-  }, [code]);
+  }, [code, booth?.name]);
 
   useEffect(() => {
     const id = Number(boothId);
@@ -151,11 +151,11 @@ export function StudentCheckinPage() {
   const [code, setCode] = useState(() => params.get("code"));
   const videoRef = useRef<HTMLVideoElement>(null);
   const scannerRef = useRef<QrScanner | null>(null);
-  const [state, setState] = useState<"idle" | "previewing" | "checking" | "done" | "error">(
+  const [state, setState] = useState<"idle" | "checking" | "done" | "error">(
     "idle",
   );
   const [message, setMessage] = useState("");
-  const [targetName, setTargetName] = useState("");
+  const [targetName, setTargetName] = useState(() => params.get("booth") ?? "");
   useEffect(() => {
     QrScanner.WORKER_PATH = qrScannerWorkerPath;
     if (code || state !== "idle" || !videoRef.current) return;
@@ -165,12 +165,14 @@ export function StudentCheckinPage() {
         try {
           const scannedUrl = new URL(data);
           const scannedCode = scannedUrl.searchParams.get("code");
+          const scannedBooth = scannedUrl.searchParams.get("booth");
           if (scannedUrl.pathname !== "/check-in" || !scannedCode) {
             setMessage("CBFESTA 체크인 QR이 아닙니다.");
             return;
           }
           setCode(scannedCode);
-          setParams({ code: scannedCode }, { replace: true });
+          setTargetName(scannedBooth ?? "");
+          setParams(scannedBooth ? { code: scannedCode, booth: scannedBooth } : { code: scannedCode }, { replace: true });
         } catch {
           setMessage("CBFESTA 체크인 QR이 아닙니다.");
         }
@@ -191,23 +193,11 @@ export function StudentCheckinPage() {
       scannerRef.current = null;
     };
   }, [code, setParams, state]);
-  useEffect(() => {
-    if (!code || !user || state !== "idle") return;
-    setState("previewing");
-    void previewQr(code)
-      .then((result) => {
-        setTargetName(result.targetName);
-        setState("idle");
-      })
-      .catch((caught) => {
-        setState("error");
-        setMessage(caught instanceof Error ? caught.message : "QR 정보를 확인하지 못했습니다.");
-      });
-  }, [code, state, user]);
   const checkin = async () => {
     if (!code) return;
     if (!user) {
-      navigate(`/login?next=${encodeURIComponent(`/check-in?code=${code}`)}`);
+      const next = `/check-in?code=${encodeURIComponent(code)}${targetName ? `&booth=${encodeURIComponent(targetName)}` : ""}`;
+      navigate(`/login?next=${encodeURIComponent(next)}`);
       return;
     }
     setState("checking");
@@ -236,10 +226,10 @@ export function StudentCheckinPage() {
       )}
       {code && <QrCode />}
       <span>CHECK-IN</span>
-      {state === "idle" && code && targetName ? (
+      {state === "idle" && code && user ? (
         <>
           <p className="checkin-target-label">방문할 부스</p>
-          <h1>{targetName}</h1>
+          <h1>{targetName || "부스"}</h1>
           <p>이 부스를 방문한 것이 맞는지 확인해 주세요.</p>
           <button className="primary-action" onClick={() => void checkin()}>
             <CheckCircle2 /> 이 부스 방문 인증하기
@@ -251,9 +241,7 @@ export function StudentCheckinPage() {
             {state === "done"
               ? "완료됐어요!"
               : code
-                ? user
-                  ? "부스 정보를 확인 중이에요."
-                  : "로그인 후 방문을 인증하세요."
+                ? "로그인 후 방문을 인증하세요."
                 : "QR을 스캔해주세요."}
           </h1>
           <p>{message || "부스 화면의 QR을 카메라로 비춰주세요."}</p>
@@ -264,7 +252,7 @@ export function StudentCheckinPage() {
           <CheckCircle2 /> 로그인하고 인증하기
         </button>
       )}
-      {(state === "previewing" || state === "checking") && <p>확인 중…</p>}
+      {state === "checking" && <p>인증 중…</p>}
       {state === "done" && (
         <Link className="secondary-action" to="/">
           축제로 돌아가기
