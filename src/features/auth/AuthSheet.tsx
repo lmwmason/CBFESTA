@@ -166,7 +166,7 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
                     onChange={(event) =>
                       setForm({ ...form, studentNumber: event.target.value })
                     }
-                    placeholder="20260101"
+                    placeholder="2309"
                   />
                 </div>
               </label>

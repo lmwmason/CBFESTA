@@ -13,6 +13,10 @@ import { AdminDashboard, BoothDashboard } from "../RoleDashboards";
 import { AuthSheet } from "../features/auth/AuthSheet";
 import { FestivalOnboarding } from "../features/onboarding/FestivalOnboarding";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
+import {
+  AdminCategoriesPage,
+  NewCategoryPage,
+} from "../features/admin/AdminCategoriesPage";
 
 function RouteHeader() {
   return (
@@ -254,7 +258,15 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/categories"
         element={
           <RoleRoute allow={["owner", "admin"]}>
-            <AdminDashboard initialSection="categories" />
+            <AdminCategoriesPage />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/categories/new"
+        element={
+          <RoleRoute allow={["owner", "admin"]}>
+            <NewCategoryPage />
           </RoleRoute>
         }
       />
