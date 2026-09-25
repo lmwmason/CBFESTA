@@ -101,6 +101,12 @@ export async function createReport(values: TablesInsert<'reports'>) {
   return data;
 }
 
+export async function setupFestival(name: string, slug: string) {
+  const { data, error } = await requireClient().functions.invoke('setup-festival', { body: { name, slug } });
+  if (error) throw error;
+  return data as { festivalId: number };
+}
+
 export function subscribeToFestival(festivalId: number, onChange: () => void) {
   const client = requireClient();
   const channel = client.channel(`festival:${festivalId}`)
