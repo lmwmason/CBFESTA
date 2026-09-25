@@ -424,7 +424,11 @@ function TeamsPage() {
           {teams.map((team, index) => (
             <article key={team.id}>
               <strong>{index + 1}</strong>
-              <i style={{ backgroundColor: team.primary_color }} />
+              {team.logo_url ? (
+                <img src={team.logo_url} alt="" />
+              ) : (
+                <i style={{ backgroundColor: team.primary_color }} />
+              )}
               <span>
                 <b>{team.name}</b>
                 <small>{team.score.toLocaleString()} P</small>
