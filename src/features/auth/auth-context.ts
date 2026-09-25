@@ -13,8 +13,8 @@ export type AuthValue = {
   activeMembership: Membership | null;
   activeRoles: FestivalRole[];
   setActiveFestival: (festivalId: number) => void;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (details: { email: string; password: string; name: string; studentNumber: string; accountType: 'student' | 'teacher' }) => Promise<void>;
+  signIn: (id: string, password: string) => Promise<void>;
+  signUp: (details: { id: string; password: string; name: string; studentNumber: string; accountType: 'student' | 'teacher' }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshMemberships: () => Promise<void>;
 };

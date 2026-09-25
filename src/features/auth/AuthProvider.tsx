@@ -9,6 +9,10 @@ import type { Session } from "@supabase/supabase-js";
 import { isSupabaseConfigured, supabase } from "../../lib/supabase/client";
 import { AuthContext, type AuthValue, type FestivalRole, type Membership } from "./auth-context";
 const ACTIVE_FESTIVAL_KEY = "cbfesta.activeFestivalId";
+const LOGIN_EMAIL_DOMAIN = "cbfesta.local";
+function toLoginEmail(id: string) {
+  return `${id.trim().toLowerCase()}@${LOGIN_EMAIL_DOMAIN}`;
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,7 +40,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {
         id: user.id,
         display_name:
-          user.user_metadata.full_name ?? user.email?.split("@")[0] ?? "사용자",
+          user.user_metadata.full_name ??
+          user.user_metadata.login_id ??
+          user.email?.split("@")[0] ??
+          "사용자",
         student_number: user.user_metadata.student_number ?? null,
         avatar_url: user.user_metadata.avatar_url ?? null,
       },
@@ -85,23 +92,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(ACTIVE_FESTIVAL_KEY, String(festivalId));
     setActiveFestivalId(festivalId);
   };
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (id: string, password: string) => {
     if (!supabase) throw new Error("Supabase 설정이 필요합니다.");
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: toLoginEmail(id),
       password,
     });
     if (error) throw error;
   }, []);
   const signUp = useCallback(
     async ({
-      email,
+      id,
       password,
       name,
       studentNumber,
       accountType,
     }: {
-      email: string;
+      id: string;
       password: string;
       name: string;
       studentNumber: string;
@@ -109,13 +116,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }) => {
       if (!supabase) throw new Error("Supabase 설정이 필요합니다.");
       const { data, error } = await supabase.functions.invoke("register", {
-        body: { email, password, name, studentNumber, accountType },
+        body: { id, password, name, studentNumber, accountType },
       });
       if (error)
         throw new Error(
           (data as { error?: string } | null)?.error ?? error.message,
         );
-      await signIn(email, password);
+      await signIn(id, password);
     },
     [signIn],
   );

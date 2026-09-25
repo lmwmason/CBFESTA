@@ -2,9 +2,9 @@ import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
   Hash,
+  IdCard,
   LockKeyhole,
   LogOut,
-  Mail,
   UserRound,
   GraduationCap,
   X,
@@ -24,7 +24,7 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
   } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [form, setForm] = useState({
-    email: "",
+    id: "",
     password: "",
     name: "",
     studentNumber: "",
@@ -37,7 +37,7 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
     setError("");
     setState("saving");
     try {
-      if (mode === "signin") await signIn(form.email, form.password);
+      if (mode === "signin") await signIn(form.id, form.password);
       else await signUp(form);
       onClose?.();
     } catch (caught) {
@@ -48,7 +48,7 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
           : "요청을 처리하지 못했습니다.";
       setError(
         message.includes("Invalid login")
-          ? "이메일 또는 비밀번호를 확인해 주세요."
+          ? "아이디 또는 비밀번호를 확인해 주세요."
           : message,
       );
     }
@@ -67,12 +67,12 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
           </button>
         )}
         <span>MY ACCOUNT</span>
-        <h2>{user.user_metadata.full_name ?? user.email?.split("@")[0]}</h2>
+        <h2>{user.user_metadata.full_name ?? user.user_metadata.login_id}</h2>
         <p>
           {user.user_metadata.student_number
             ? `${user.user_metadata.student_number} · `
             : ""}
-          {user.email}
+          {user.user_metadata.login_id ?? user.email?.split("@")[0]}
         </p>
         {memberships.length > 0 && (
           <label className="account-festival">
@@ -171,7 +171,7 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
                   </select>
                 </div>
               </label>
-              {form.accountType === "student" && <label>
+              <label>
                 <span>학번</span>
                 <div>
                   <Hash />
@@ -186,22 +186,23 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
                     placeholder="2309"
                   />
                 </div>
-              </label>}
+              </label>
             </div>
           )}
           <label>
-            <span>이메일</span>
+            <span>아이디</span>
             <div>
-              <Mail />
+              <IdCard />
               <input
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 required
-                value={form.email}
+                pattern="[a-zA-Z0-9_-]{3,20}"
+                value={form.id}
                 onChange={(event) =>
-                  setForm({ ...form, email: event.target.value })
+                  setForm({ ...form, id: event.target.value })
                 }
-                placeholder="name@example.com"
+                placeholder="영문·숫자 3~20자"
               />
             </div>
           </label>
