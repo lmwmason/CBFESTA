@@ -26,6 +26,13 @@ CBFESTA uses the following externally maintained software and visual assets. No 
 - License: MIT
 - Use in CBFESTA: interaction springs, entrance transitions, shared layout movement, and overlays.
 
+## Supabase JavaScript Client
+
+- Source: https://github.com/supabase/supabase-js
+- Version: 2.117.1
+- License: MIT
+- Use in CBFESTA: authenticated access to the festival database, role-aware data, and asset storage.
+
 ## Three.js and React Three Fiber
 
 - Sources: https://github.com/mrdoob/three.js and https://github.com/pmndrs/react-three-fiber
