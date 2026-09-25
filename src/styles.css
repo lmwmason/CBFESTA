@@ -346,6 +346,23 @@ a.metric.accent:hover { background: #000; }
 /* ---------------------------------------------------------------------- */
 /* Booth desk: queue & inventory                                           */
 /* ---------------------------------------------------------------------- */
+.ad-card { max-width: 1060px; margin: 20px auto 0; padding: 20px; border: 1px solid var(--line); background: #fff; }
+.ad-card-head { display: flex; align-items: flex-start; gap: 12px; }
+.ad-card-head svg { width: 20px; margin-top: 2px; color: var(--secondary); flex: 0 0 auto; }
+.ad-card-head b { display: block; font-size: 15px; }
+.ad-card-head small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.ad-card-buy { display: flex; align-items: center; gap: 10px; margin-top: 16px; }
+.ad-card-buy input { width: 72px; height: 40px; padding: 0 10px; border: 1px solid var(--line); font: inherit; }
+.ad-card-buy span { color: var(--muted); font-size: 13px; }
+.ad-card-buy .secondary-action { margin-left: auto; }
+.ad-card-upload { position: relative; cursor: pointer; }
+.ad-card-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.ad-card-upload svg { width: 15px; }
+.ad-card-history { list-style: none; margin: 16px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.ad-card-history li { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.ad-card-history span { padding: 2px 8px; border-radius: 999px; background: #f5f5f4; font-size: 10px; font-weight: 700; }
+.ad-card-history span.live { background: var(--success-bg); color: var(--success); }
+.ad-card-history em { margin-left: auto; font-style: normal; font-weight: 700; color: var(--ink); }
 .queue-board { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 1060px; margin: 20px auto 0; }
 .queue-column { background: #fff; border: 1px solid var(--line); align-self: start; }
 .queue-column h2 { margin: 0; height: 48px; display: flex; align-items: center; padding: 0 18px; font-size: 14px; border-bottom: 1px solid var(--line); }
@@ -533,6 +550,13 @@ a.metric.accent:hover { background: #000; }
 .booth-description h1, .booth-description h2, .booth-description h3 { margin: 20px 0 8px; color: var(--ink); letter-spacing: -.02em; }
 .booth-description blockquote { margin: 0 0 12px; padding-left: 12px; border-left: 2px solid var(--line); color: var(--muted); }
 .booth-description code { padding: 2px 5px; background: #f5f5f4; border-radius: 4px; font-size: 13px; }
+.star-rating { display: flex; align-items: center; gap: 2px; margin-top: 18px; }
+.star-rating button { display: flex; padding: 2px; color: var(--line); }
+.star-rating button svg { width: 20px; }
+.star-rating button.filled { color: var(--strong); }
+.star-rating button.filled svg { fill: var(--strong); }
+.star-rating button:hover:not(:disabled) { color: var(--secondary); }
+.star-rating span { margin-left: 8px; color: var(--muted); font-size: 13px; }
 .detail-page dl { display: flex; gap: 40px; margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--line); }
 .detail-page dt { font-size: 12px; color: var(--muted); }
 .detail-page dd { margin: 6px 0; font-size: 15px; font-weight: 700; }
@@ -625,6 +649,9 @@ a.metric.accent:hover { background: #000; }
 /* Homepage                                                                 */
 /* ---------------------------------------------------------------------- */
 .live-site { min-height: 100vh; }
+.ad-banner { display: flex; gap: 10px; padding: 14px clamp(16px,6vw,80px); overflow-x: auto; border-bottom: 1px solid var(--line); }
+.ad-banner a { flex: 0 0 auto; display: block; border: 1px solid var(--line); line-height: 0; }
+.ad-banner img { width: 320px; max-width: 80vw; aspect-ratio: 4 / 1; object-fit: cover; }
 .festival-hero { padding: clamp(40px,6vw,72px) clamp(16px,6vw,80px) clamp(32px,5vw,56px); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(0,1fr) minmax(260px,.4fr); gap: clamp(24px,5vw,64px); align-items: end; }
 .festival-hero > div > span, .live-catalog header span, .teams-preview header span { display: block; font: 700 11px Pretendard; letter-spacing: .1em; color: var(--muted); }
 .festival-hero h1 { max-width: 760px; margin: 12px 0; font-size: clamp(32px,5vw,52px); line-height: 1.06; letter-spacing: -.03em; }

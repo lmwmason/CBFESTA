@@ -10,6 +10,7 @@ import {
   MapPin,
   Plus,
   Search,
+  Star,
   Store,
   Users,
   X,
@@ -29,12 +30,14 @@ import type { Tables } from "../lib/supabase/database.types";
 import {
   estimateWaitMinutes,
   getBoothDetail,
+  getBoothRatingSummary,
   getCurrentFestival,
   getFestivalCatalog,
   getMyQueueEntries,
   getMyQueueEntry,
   joinQueue,
   lookupStudentByNumber,
+  rateBooth,
   subscribeToBoothOperations,
   subscribeToFestival,
   updateQueueEntry,
@@ -639,6 +642,28 @@ function BoothDetailPage() {
     Record<number, { state: "checking" | "ok" | "error"; note: string }>
   >({});
   const [error, setError] = useState("");
+  const [rating, setRating] = useState<Awaited<
+    ReturnType<typeof getBoothRatingSummary>
+  > | null>(null);
+  const [ratingBusy, setRatingBusy] = useState(false);
+
+  const submitRating = async (stars: number) => {
+    if (!user) {
+      navigate(`/login?next=${encodeURIComponent(`/booths/${id}`)}`);
+      return;
+    }
+    setRatingBusy(true);
+    try {
+      await rateBooth(id, user.id, stars);
+      setRating(await getBoothRatingSummary(id, user.id));
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "별점을 남기지 못했습니다.",
+      );
+    } finally {
+      setRatingBusy(false);
+    }
+  };
 
   const checkCompanion = async (index: number, rawValue: string) => {
     const value = rawValue.trim();
@@ -682,6 +707,7 @@ function BoothDetailPage() {
       const data = await getBoothDetail(id);
       setDetail(data);
       setMyQueue(user ? await getMyQueueEntry(id, user.id) : null);
+      setRating(await getBoothRatingSummary(id, user?.id));
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "부스 정보를 불러오지 못했습니다.",
@@ -693,18 +719,10 @@ function BoothDetailPage() {
 
   useEffect(() => {
     if (Number.isNaN(id)) return;
-    void getBoothDetail(id)
-      .then(async (data) => {
-        setDetail(data);
-        setMyQueue(user ? await getMyQueueEntry(id, user.id) : null);
-      })
-      .catch((caught) =>
-        setError(
-          caught instanceof Error ? caught.message : "부스 정보를 불러오지 못했습니다.",
-        ),
-      )
-      .finally(() => setLoading(false));
-  }, [id, user]);
+    void (async () => {
+      await refresh();
+    })();
+  }, [id, refresh]);
   useEffect(() => {
     if (Number.isNaN(id)) return;
     return subscribeToBoothOperations(id, () => void refresh());
@@ -785,6 +803,25 @@ function BoothDetailPage() {
         ) : (
           <p>{booth.short_description ?? "상세 설명이 아직 등록되지 않았습니다."}</p>
         )}
+        <div className="star-rating">
+          {[1, 2, 3, 4, 5].map((value) => (
+            <button
+              key={value}
+              type="button"
+              disabled={ratingBusy}
+              aria-label={`${value}점`}
+              className={rating && value <= (rating.myStars ?? 0) ? "filled" : ""}
+              onClick={() => void submitRating(value)}
+            >
+              <Star />
+            </button>
+          ))}
+          <span>
+            {rating && rating.count > 0
+              ? `${rating.average.toFixed(1)} (${rating.count}명)`
+              : "아직 평가가 없어요"}
+          </span>
+        </div>
         <dl>
           <div>
             <dt>위치</dt>

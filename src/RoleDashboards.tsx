@@ -11,6 +11,7 @@ import {
   Store,
   Tags,
   Trophy,
+  Upload,
   UserX,
   Users,
 } from "lucide-react";
@@ -18,10 +19,17 @@ import { Link } from "react-router-dom";
 import type { Tables } from "./lib/supabase/database.types";
 import { supabase } from "./lib/supabase/client";
 import {
+  AD_BANNER_HEIGHT,
+  AD_BANNER_WIDTH,
+  getBoothAds,
   getBoothQueue,
+  getBoothRatingSummary,
+  purchaseBoothAd,
+  readImageDimensions,
   subscribeToBoothOperations,
   updateBooth,
   updatePartyStatus,
+  uploadBoothAdImage,
 } from "./lib/supabase/services";
 import { useAuth } from "./features/auth/auth-context";
 
@@ -65,6 +73,52 @@ export function BoothDashboard() {
   const [statusBusy, setStatusBusy] = useState(false);
   const [queueBusyId, setQueueBusyId] = useState<number | null>(null);
   const [error, setError] = useState("");
+  const [ads, setAds] = useState<Tables<"booth_ads">[]>([]);
+  const [rating, setRating] = useState<{ average: number; count: number } | null>(null);
+  const [adHours, setAdHours] = useState(1);
+  const [adBusy, setAdBusy] = useState(false);
+
+  const loadAds = useCallback(async (boothId: number) => {
+    try {
+      const [adRows, ratingSummary] = await Promise.all([
+        getBoothAds(boothId),
+        getBoothRatingSummary(boothId),
+      ]);
+      setAds(adRows);
+      setRating(ratingSummary);
+    } catch {
+      // non-critical, surfaced elsewhere via error state already
+    }
+  }, []);
+
+  const buyAd = async (file: File) => {
+    if (!booth) return;
+    setAdBusy(true);
+    setError("");
+    try {
+      const { width, height } = await readImageDimensions(file);
+      if (width !== AD_BANNER_WIDTH || height !== AD_BANNER_HEIGHT) {
+        throw new Error(
+          `이미지 크기가 ${width}×${height}px예요. 정확히 ${AD_BANNER_WIDTH}×${AD_BANNER_HEIGHT}px로 만들어 올려주세요.`,
+        );
+      }
+      const imageUrl = await uploadBoothAdImage(booth.festival_id, booth.id, file);
+      await purchaseBoothAd(booth.id, adHours, imageUrl);
+      const updated = await supabase!
+        .from("booths")
+        .select("*")
+        .eq("id", booth.id)
+        .single();
+      if (updated.data) setBooth(updated.data);
+      await loadAds(booth.id);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "광고를 구매하지 못했습니다.",
+      );
+    } finally {
+      setAdBusy(false);
+    }
+  };
 
   const loadQueue = useCallback(async (boothId: number) => {
     try {
@@ -98,10 +152,13 @@ export function BoothDashboard() {
       ]);
       setBooth(boothData);
       setCheckinCount(checkins ?? 0);
-      if (boothData) await loadQueue(boothData.id);
+      if (boothData) {
+        await loadQueue(boothData.id);
+        await loadAds(boothData.id);
+      }
       setLoading(false);
     })();
-  }, [userId, loadQueue]);
+  }, [userId, loadQueue, loadAds]);
 
   useEffect(() => {
     if (!booth) return;
@@ -188,9 +245,76 @@ export function BoothDashboard() {
           </button>
         ))}
       </div>
-      <section className="metric-grid metrics-2">
+      <section className="metric-grid metrics-3">
         <Metric label="CHECK-INS" value={checkinCount} note="누적 참여 확인" />
         <Metric label="LIVE QUEUE" value={waiting.length + called.length} note="현재 대기 중" accent />
+        <Metric
+          label="AD 코인"
+          value={booth.ad_currency}
+          note={
+            rating && rating.count > 0
+              ? `평점 ${rating.average.toFixed(1)} (${rating.count}명)`
+              : "별점을 받으면 코인이 쌓여요"
+          }
+        />
+      </section>
+      <section className="ad-card">
+        <div className="ad-card-head">
+          <Megaphone />
+          <div>
+            <b>부스 광고</b>
+            <small>코인으로 원하는 시간만큼 홈 화면에 광고를 띄워요. 시간당 10코인.</small>
+          </div>
+        </div>
+        <div className="ad-card-buy">
+          <input
+            type="number"
+            min={1}
+            max={24}
+            value={adHours}
+            onChange={(event) => setAdHours(Number(event.target.value))}
+          />
+          <span>
+            시간 · {adHours * 10}코인 · 이미지 {AD_BANNER_WIDTH}×{AD_BANNER_HEIGHT}px
+          </span>
+          <label className="secondary-action ad-card-upload">
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              disabled={adBusy || booth.ad_currency < adHours * 10}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void buyAd(file);
+              }}
+            />
+            <Upload /> {adBusy ? "구매 중…" : "광고 이미지 업로드"}
+          </label>
+        </div>
+        {ads.length > 0 && (
+          <ul className="ad-card-history">
+            {ads.slice(0, 5).map((ad) => {
+              const active = new Date(ad.ends_at) > new Date();
+              return (
+                <li key={ad.id}>
+                  <span className={active ? "live" : ""}>{active ? "진행 중" : "종료"}</span>
+                  {new Date(ad.starts_at).toLocaleString("ko-KR", {
+                    month: "numeric",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  ~
+                  {new Date(ad.ends_at).toLocaleString("ko-KR", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  <em>{ad.cost}코인</em>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </section>
       <section className="queue-board">
         <div className="queue-column">

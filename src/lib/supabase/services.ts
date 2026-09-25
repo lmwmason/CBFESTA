@@ -112,6 +112,68 @@ export async function getBoothDetail(boothId: number) {
   };
 }
 
+export async function getBoothRatingSummary(boothId: number, userId?: string) {
+  const client = requireClient();
+  const { data, error } = await client
+    .from("booth_ratings")
+    .select("stars, user_id")
+    .eq("booth_id", boothId);
+  if (error) throw error;
+  const rows = data ?? [];
+  const count = rows.length;
+  const average = count
+    ? rows.reduce((total, row) => total + row.stars, 0) / count
+    : 0;
+  const mine = userId ? rows.find((row) => row.user_id === userId) ?? null : null;
+  return { average, count, myStars: mine?.stars ?? null };
+}
+
+export async function rateBooth(boothId: number, userId: string, stars: number) {
+  const { error } = await requireClient()
+    .from("booth_ratings")
+    .upsert(
+      { booth_id: boothId, user_id: userId, stars, updated_at: new Date().toISOString() },
+      { onConflict: "booth_id,user_id" },
+    );
+  if (error) throw error;
+}
+
+export async function getActiveBoothAds(festivalId: number) {
+  const { data, error } = await requireClient()
+    .from("booth_ads")
+    .select("*, booths(name, logo_url, accent_color, short_description)")
+    .eq("festival_id", festivalId)
+    .lte("starts_at", new Date().toISOString())
+    .gte("ends_at", new Date().toISOString())
+    .order("starts_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getBoothAds(boothId: number) {
+  const { data, error } = await requireClient()
+    .from("booth_ads")
+    .select("*")
+    .eq("booth_id", boothId)
+    .order("starts_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function purchaseBoothAd(
+  boothId: number,
+  hours: number,
+  imageUrl: string,
+) {
+  const { data, error } = await requireClient().rpc("purchase_booth_ad", {
+    target_booth_id: boothId,
+    hours,
+    image_url: imageUrl,
+  });
+  if (error) throw error;
+  return data;
+}
+
 export function estimateWaitMinutes(
   booth: Pick<Tables<"booths">, "session_minutes" | "concurrent_capacity">,
   waitingCount: number,
@@ -582,7 +644,7 @@ export async function getTeamRoster(festivalId: number) {
 export async function balanceTeams(festivalId: number, desiredTeamSize?: number) {
   const { data, error } = await requireClient().rpc(
     "assign_unassigned_students_to_teams",
-    { target_festival_id: festivalId, desired_team_size: desiredTeamSize ?? null },
+    { target_festival_id: festivalId, desired_team_size: desiredTeamSize ?? undefined },
   );
   if (error) throw error;
   return (
@@ -598,7 +660,7 @@ export async function updateTeamBranding(
     target_team_id: teamId,
     new_name: values.name,
     new_primary_color: values.primary_color,
-    new_logo_url: values.logo_url ?? null,
+    new_logo_url: values.logo_url ?? undefined,
   });
   if (error) throw error;
   return data;
@@ -755,4 +817,36 @@ export function uploadBoothAsset(
     `${festivalId}/${boothId}/${slot}.${extension}`,
     file,
   );
+}
+
+export function uploadBoothAdImage(
+  festivalId: number,
+  boothId: number,
+  file: File,
+) {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "png";
+  return uploadPublicImage(
+    "booth-assets",
+    `${festivalId}/${boothId}/ad-${Date.now()}.${extension}`,
+    file,
+  );
+}
+
+export const AD_BANNER_WIDTH = 800;
+export const AD_BANNER_HEIGHT = 200;
+
+export function readImageDimensions(file: File) {
+  return new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve({ width: image.naturalWidth, height: image.naturalHeight });
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("이미지를 읽지 못했습니다."));
+    };
+    image.src = url;
+  });
 }

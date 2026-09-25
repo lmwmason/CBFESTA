@@ -4,14 +4,15 @@ import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
 import type { Tables } from "./lib/supabase/database.types";
 import {
+  getActiveBoothAds,
   getAnnouncements,
   getCurrentFestival,
   getFestivalCatalog,
+  getMyTeamMembership,
   subscribeToFestival,
 } from "./lib/supabase/services";
 import { useAuth } from "./features/auth/auth-context";
 import { getCategoryIcon } from "./lib/categoryIcons";
-import { roleRoute } from "./lib/roleRoute";
 import { AccountMenu } from "./components/AccountMenu";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -39,11 +40,16 @@ export default function App() {
   const [festival, setFestival] = useState<Tables<"festivals"> | null>(null);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [announcements, setAnnouncements] = useState<Tables<"announcements">[]>([]);
+  const [ads, setAds] = useState<Awaited<ReturnType<typeof getActiveBoothAds>>>([]);
+  const [myTeam, setMyTeam] = useState<Awaited<
+    ReturnType<typeof getMyTeamMembership>
+  > | null>(null);
   const [tickerDismissed, setTickerDismissed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const membershipFestival = auth.activeMembership?.festivals;
+  const userId = auth.user?.id;
   useEffect(() => {
     let cancelled = false;
     async function load() {
@@ -54,16 +60,19 @@ export default function App() {
         if (cancelled) return;
         setFestival(current);
         if (current) {
-          const [catalogData, announcementData] = await Promise.all([
+          const [catalogData, announcementData, adData] = await Promise.all([
             getFestivalCatalog(current.id),
             getAnnouncements(current.id),
+            getActiveBoothAds(current.id),
           ]);
           if (cancelled) return;
           setCatalog(catalogData);
           setAnnouncements(announcementData);
+          setAds(adData);
         } else {
           setCatalog(null);
           setAnnouncements([]);
+          setAds([]);
         }
       } catch (caught) {
         if (!cancelled)
@@ -86,8 +95,18 @@ export default function App() {
     return subscribeToFestival(festival.id, () => {
       void getFestivalCatalog(festival.id).then(setCatalog);
       void getAnnouncements(festival.id).then(setAnnouncements);
+      void getActiveBoothAds(festival.id).then(setAds);
     });
   }, [festival]);
+  useEffect(() => {
+    void (async () => {
+      if (!userId) {
+        setMyTeam(null);
+        return;
+      }
+      setMyTeam(await getMyTeamMembership(userId));
+    })();
+  }, [userId]);
   const booths = useMemo(
     () =>
       (catalog?.booths ?? []).filter((booth) =>
@@ -138,7 +157,6 @@ export default function App() {
         </section>
       </main>
     );
-  const role = auth.activeMembership?.role;
   return (
     <div className="site live-site">
       <header className="header">
@@ -166,6 +184,17 @@ export default function App() {
         </div>
       )}
       <main>
+        {ads.length > 0 && (
+          <section className="ad-banner">
+            {ads.map((ad) =>
+              ad.image_url ? (
+                <Link key={ad.id} to={`/booths/${ad.booth_id}`}>
+                  <img src={ad.image_url} alt={ad.booths?.name ?? "부스 광고"} />
+                </Link>
+              ) : null,
+            )}
+          </section>
+        )}
         <section className="festival-hero">
           <div>
             <span>
@@ -178,8 +207,11 @@ export default function App() {
                 <Search /> 부스 둘러보기
               </Link>
               {auth.user && (
-                <Link className="secondary-action" to={roleRoute(role)}>
-                  내 업무 공간 <ArrowRight />
+                <Link className="secondary-action" to="/teams/mine">
+                  {myTeam?.teams
+                    ? `내 팀 · ${myTeam.teams.name}`
+                    : "내 팀"}{" "}
+                  <ArrowRight />
                 </Link>
               )}
             </div>
