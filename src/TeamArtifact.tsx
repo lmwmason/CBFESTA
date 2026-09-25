@@ -22,17 +22,15 @@ function useEmblemTexture({ teamName, logoUrl, primaryColor }: Props) {
 }
 
 function Artifact(props: Props) {
-  const group = useRef<THREE.Group>(null); const ribbonA = useRef<THREE.Mesh>(null); const ribbonB = useRef<THREE.Mesh>(null); const { pointer } = useThree(); const texture = useEmblemTexture(props);
-  useFrame(({ clock }, delta) => { if (!group.current || !ribbonA.current || !ribbonB.current) return; group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, pointer.x * .18, 3.2, delta); group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, -.04 - pointer.y * .08, 3.2, delta); group.current.position.y = Math.sin(clock.elapsedTime * .75) * .035; ribbonA.current.rotation.z += delta * .04; ribbonB.current.rotation.z -= delta * .03; });
-  return <group ref={group} rotation={[-.04, -.12, 0]}>
-    <mesh position={[0, -.05, -.22]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[1.32, 1.32, .22, 64]} /><meshPhysicalMaterial color="#fff8f5" metalness={.05} roughness={.18} clearcoat={1} /></mesh>
-    <mesh position={[0, -.05, -.08]}><circleGeometry args={[1.18, 64]} /><meshPhysicalMaterial color="#ffc2dc" transparent opacity={.38} transmission={.35} thickness={.7} roughness={.12} /></mesh>
-    <mesh position={[0, -.05, .02]}><ringGeometry args={[.84, .96, 64]} /><meshBasicMaterial color="#ffffff" transparent opacity={.9} /></mesh>
-    <mesh position={[0, -.05, .05]}><circleGeometry args={[.82, 64]} /><meshBasicMaterial map={texture} toneMapped={false} /></mesh>
-    <mesh ref={ribbonA} rotation={[1.12, .18, -.2]}><torusGeometry args={[1.5, .055, 14, 96]} /><meshPhysicalMaterial color="#f52a9a" transparent opacity={.5} transmission={.3} roughness={.1} /></mesh>
-    <mesh ref={ribbonB} rotation={[1.42, -.25, .64]}><torusGeometry args={[1.62, .035, 12, 96]} /><meshPhysicalMaterial color="#ffc85a" transparent opacity={.7} transmission={.25} roughness={.12} /></mesh>
+  const group = useRef<THREE.Group>(null); const { pointer } = useThree(); const texture = useEmblemTexture(props);
+  useFrame(({ clock }, delta) => { if (!group.current) return; group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, -.18 + pointer.x * .12, 3.2, delta); group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, -.08 - pointer.y * .05, 3.2, delta); group.current.position.y = Math.sin(clock.elapsedTime * .65) * .018; });
+  return <group ref={group} rotation={[-.08, -.18, -.04]}>
+    <mesh position={[0, -.05, -.2]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[1.28, 1.28, .26, 64]} /><meshStandardMaterial color="#b8aaa0" metalness={.72} roughness={.25} /></mesh>
+    <mesh position={[0, -.05, -.04]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[1.18, 1.18, .19, 64]} /><meshPhysicalMaterial color={props.primaryColor} metalness={.2} roughness={.24} clearcoat={1} clearcoatRoughness={.1} /></mesh>
+    <mesh position={[0, -.05, .07]}><circleGeometry args={[1.05, 64]} /><meshBasicMaterial map={texture} toneMapped={false} /></mesh>
+    <mesh position={[0, -.05, .085]}><ringGeometry args={[1.05, 1.1, 64]} /><meshStandardMaterial color="#f5eee9" metalness={.55} roughness={.2} /></mesh>
   </group>;
 }
 
-function Scene(props: Props) { return <><ambientLight intensity={2.6} /><directionalLight position={[3, 4, 5]} intensity={3} color="#fffaf2" /><pointLight position={[-3, 0, 3]} intensity={4} color="#f52a9a" /><pointLight position={[3, -1, 2]} intensity={3} color="#ffc85a" /><Artifact {...props} /></>; }
+function Scene(props: Props) { return <><ambientLight intensity={2.2} /><directionalLight position={[3, 5, 5]} intensity={3.4} color="#fffaf4" /><pointLight position={[-3, 0, 3]} intensity={1.6} color={props.primaryColor} /><Artifact {...props} /></>; }
 export default function TeamArtifact(props: Props) { return <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 4.8], fov: 34 }} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}><Scene {...props} /></Canvas>; }
