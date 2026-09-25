@@ -1,108 +1,38 @@
 import { lazy, Suspense, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import {
-  Bell, ChevronRight, Compass, Home, Map, MapPin, QrCode, Search,
-  Sparkles, Trophy, Users, X,
-} from 'lucide-react';
+import { Bell, ChevronLeft, ChevronRight, Clock3, Heart, Home, Map, MapPin, QrCode, Search, Ticket, Users, X } from 'lucide-react';
 
 const TeamArtifact = lazy(() => import('./TeamArtifact'));
-
-const missions = [
-  { id: 1, type: '지금 가까워요', title: '푸드트럭에서 숨은 메뉴 찾기', place: '운동장 · 2분', score: 150, face: '🥤', accent: 'coral' },
-  { id: 2, type: '친구와 함께', title: '청룡 포토존에서 팀 사진 남기기', place: '본관 앞 · 4분', score: 240, face: '📸', accent: 'blue' },
-  { id: 3, type: '오늘만 열려요', title: '밴드부 앙코르 암호 맞히기', place: '대강당 · 7분', score: 320, face: '🎸', accent: 'gold' },
+const programs = [
+  { id: 1, category: 'MISSION', title: '분식부스의 비밀 메뉴', place: '운동장 A-04', time: '지금 참여 가능', score: 150, face: '🥤', tone: 'orange' },
+  { id: 2, category: 'PHOTO', title: '청룡 포토존 팀 인증', place: '본관 중앙', time: '18:00까지', score: 240, face: '📸', tone: 'blue' },
+  { id: 3, category: 'LIVE', title: '밴드부 앙코르 암호', place: '대강당', time: '17:20 시작', score: 320, face: '🎸', tone: 'lime' },
+  { id: 4, category: 'SECRET', title: '방송실에서 온 전파', place: '위치 비공개', time: '단 40분', score: 500, face: '📻', tone: 'violet' },
 ];
+const tabs = ['전체', '미션', '공연', '먹거리', '전시'];
 
-const navItems = [
-  { label: '홈', icon: Home }, { label: '미션', icon: Compass }, { label: '지도', icon: Map }, { label: '우리 팀', icon: Users },
-];
+function Mark() { return <a className="brand" href="#top"><span className="brand-block">CB</span><span>FESTA<br /><small>2026</small></span></a>; }
 
-function Logo() {
-  return <a className="logo" href="#top" aria-label="CBFESTA 홈"><span className="logo-mark"><i /><i /><i /></span><span>CB<span>FESTA</span></span></a>;
+function ProgramCard({ item, index, onSelect }: { item: typeof programs[number]; index: number; onSelect: () => void }) {
+  return <motion.article className="program-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .04 }}>
+    <button className={`program-image ${item.tone}`} onClick={onSelect} aria-label={`${item.title} 자세히 보기`}><span className="program-number">0{index + 1}</span><span className="tossface program-face">{item.face}</span><span className="image-label">+{item.score} P</span></button>
+    <div className="program-info"><div><span>{item.category}</span><button aria-label="관심 프로그램"><Heart /></button></div><h3>{item.title}</h3><p><MapPin /> {item.place}</p><p><Clock3 /> {item.time}</p></div>
+  </motion.article>;
 }
 
-function App() {
-  const [active, setActive] = useState('홈');
-  const [selected, setSelected] = useState(missions[0]);
-  const [searchOpen, setSearchOpen] = useState(false);
-
-  return (
-    <div className="app-shell" id="top">
-      <header className="topbar glass-navigation">
-        <Logo />
-        <nav className="desktop-nav" aria-label="주요 메뉴">
-          {navItems.map(({ label }) => <button className={active === label ? 'active' : ''} onClick={() => setActive(label)} key={label}>{label}</button>)}
-        </nav>
-        <div className="top-actions">
-          <button className="icon-button" aria-label="검색" onClick={() => setSearchOpen(true)}><Search /></button>
-          <button className="icon-button notification" aria-label="알림"><Bell /><span /></button>
-          <button className="avatar" aria-label="내 프로필">12</button>
-        </div>
-      </header>
-
-      <main>
-        <section className="hero">
-          <div className="hero-aurora" />
-          <div className="hero-copy">
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="eyebrow"><span /> 축제 둘째 날 · 16:24</motion.div>
-            <motion.h1 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .08 }}>오늘의 축제는<br /><em>우리가 완성해.</em></motion.h1>
-            <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .2 }}>친구들과 미션을 깨고, 우리 팀의 청룡을 깨워보세요.</motion.p>
-            <motion.button whileTap={{ scale: .96 }} className="primary-button"><QrCode /> 미션 QR 찍기</motion.button>
-          </div>
-          <div className="artifact-stage" aria-label="청룡 팀 아티팩트 3D 모델">
-            <div className="artifact-halo" />
-            <Suspense fallback={<div className="artifact-fallback" />}><TeamArtifact /></Suspense>
-            <motion.div className="team-status glass-on-3d" initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .35, type: 'spring' }}>
-              <div><span className="rank-dot" /> 청룡 · 현재 2위</div>
-              <strong>18,420<small>점</small></strong>
-              <div className="progress"><i /></div>
-              <p>다음 진화까지 <b>580점</b></p>
-            </motion.div>
-          </div>
-          <div className="hero-index">02 <span>/ 04</span></div>
-        </section>
-
-        <section className="content-section mission-section">
-          <div className="section-heading">
-            <div><span className="section-kicker">PLAY NOW</span><h2>지금 할 수 있는 미션</h2><p>가까운 곳부터 가볍게 시작해봐요.</p></div>
-            <button className="text-button">모두 보기 <ChevronRight /></button>
-          </div>
-          <div className="mission-layout">
-            <div className="mission-list">
-              {missions.map((mission) => (
-                <motion.button layout key={mission.id} onClick={() => setSelected(mission)} whileTap={{ scale: .985 }} className={`mission-card ${selected.id === mission.id ? 'selected' : ''}`}>
-                  <span className={`face-tile ${mission.accent}`}><span className="tossface">{mission.face}</span></span>
-                  <span className="mission-copy"><small>{mission.type}</small><strong>{mission.title}</strong><span><MapPin /> {mission.place}</span></span>
-                  <span className="score">+{mission.score}</span>
-                  <ChevronRight className="chevron" />
-                </motion.button>
-              ))}
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.aside key={selected.id} className="mission-detail glass-surface" initial={{ opacity: 0, x: 14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -14 }}>
-                <div className={`detail-visual ${selected.accent}`}><span className="tossface">{selected.face}</span><Sparkles /></div>
-                <div className="detail-body"><span>{selected.type}</span><h3>{selected.title}</h3><p>현장에 도착해 QR을 찾고 인증하면 팀 점수가 바로 올라가요.</p><div className="detail-meta"><span>예상 8분</span><b>+{selected.score}점</b></div><button className="dark-button">미션 시작하기 <ChevronRight /></button></div>
-              </motion.aside>
-            </AnimatePresence>
-          </div>
-        </section>
-
-        <section className="festival-strip">
-          <div><span className="live-dot" /> FESTA LIVE</div>
-          <p>지금 1,248명이 축제를 함께 만들고 있어요.</p>
-          <div className="crowd"><span>민</span><span>서</span><span>준</span><b>+1.2K</b></div>
-          <button><Trophy /> 실시간 순위 보기</button>
-        </section>
-      </main>
-
-      <nav className="mobile-nav glass-navigation" aria-label="모바일 주요 메뉴">
-        {navItems.map(({ label, icon: Icon }) => <button key={label} onClick={() => setActive(label)} className={active === label ? 'active' : ''}><Icon /><span>{label}</span></button>)}
-      </nav>
-      <AnimatePresence>
-        {searchOpen && <motion.div className="search-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSearchOpen(false)}><motion.div className="search-panel glass-overlay" initial={{ y: -18, scale: .98 }} animate={{ y: 0, scale: 1 }} onClick={e => e.stopPropagation()}><Search /><input autoFocus placeholder="미션, 부스, 공연을 찾아보세요" /><button onClick={() => setSearchOpen(false)} aria-label="닫기"><X /></button></motion.div></motion.div>}
-      </AnimatePresence>
-    </div>
-  );
+export default function App() {
+  const [tab, setTab] = useState('전체');
+  const [detail, setDetail] = useState<typeof programs[number] | null>(null);
+  const [search, setSearch] = useState(false);
+  return <div className="site" id="top">
+    <header className="header"><Mark /><nav className="main-links"><a href="#programs">프로그램</a><a href="#team">팀 랭킹</a><a href="#guide">축제 안내</a></nav><div className="header-tools"><button onClick={() => setSearch(true)} aria-label="검색"><Search /></button><button aria-label="알림"><Bell /><i /></button><button className="my-ticket"><Ticket /> 내 티켓</button></div></header>
+    <main>
+      <section className="lead"><div className="lead-copy"><span className="edition">CHEONBUK FESTIVAL · DAY 02</span><h1>학교 전체가<br />오늘의 무대.</h1><p>공연 12 · 부스 28 · 미션 16</p><div className="lead-actions"><button className="action-black"><QrCode /> QR 참여하기</button><a href="#programs">오늘 뭐 하지? <ChevronRight /></a></div></div><div className="lead-visual" id="team"><div className="artifact-wrap"><Suspense fallback={<div className="artifact-fallback" />}><TeamArtifact /></Suspense></div><div className="team-label"><span>TEAM 02</span><strong>청룡</strong><p>18,420 P · 현재 2위</p><div className="linear-progress"><i /></div></div><div className="poster-type">BLUE<br />DRAGON</div></div></section>
+      <section className="ticker"><b>LIVE</b><span>현재 참여 1,248명</span><span>·</span><span>청룡팀이 580점을 더 모으면 아티팩트가 진화해요</span><button>팀 현황 <ChevronRight /></button></section>
+      <section className="catalog" id="programs"><div className="catalog-head"><div><span>EXPLORE THE FESTA</span><h2>지금 열려 있어요</h2></div><div className="carousel-controls"><button disabled aria-label="이전"><ChevronLeft /></button><button aria-label="다음"><ChevronRight /></button></div></div><div className="tabs" role="tablist">{tabs.map(item => <button role="tab" aria-selected={tab === item} className={tab === item ? 'selected' : ''} onClick={() => setTab(item)} key={item}>{item}</button>)}</div><div className="program-grid">{programs.map((item, index) => <ProgramCard key={item.id} item={item} index={index} onSelect={() => setDetail(item)} />)}</div></section>
+      <section className="guide" id="guide"><div><span>16:40</span><p>지금 학교에서</p></div><h2>곧 시작하는<br />무대를 놓치지 마세요.</h2><ol><li><time>17:00</time><span><b>댄스부 스트릿 스테이지</b>중앙 광장</span><ChevronRight /></li><li><time>17:20</time><span><b>밴드부 앙코르 공연</b>대강당</span><ChevronRight /></li><li><time>18:00</time><span><b>팀 대항 결승 미션</b>운동장</span><ChevronRight /></li></ol></section>
+    </main>
+    <nav className="mobile-nav"><button className="active"><Home /><span>홈</span></button><button><Search /><span>탐색</span></button><button className="scan"><QrCode /></button><button><Map /><span>지도</span></button><button><Users /><span>팀</span></button></nav>
+    <AnimatePresence>{(detail || search) && <motion.div className="overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => { setDetail(null); setSearch(false); }}>{search ? <motion.div className="search-sheet" initial={{ y: -20 }} animate={{ y: 0 }} onClick={e => e.stopPropagation()}><Search /><input autoFocus placeholder="프로그램, 부스, 장소 검색" /><button onClick={() => setSearch(false)}><X /></button></motion.div> : detail && <motion.aside className="detail-sheet" initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', damping: 28, stiffness: 260 }} onClick={e => e.stopPropagation()}><button className="sheet-close" onClick={() => setDetail(null)}><X /></button><div className={`sheet-image ${detail.tone}`}><span className="tossface">{detail.face}</span></div><span>{detail.category}</span><h2>{detail.title}</h2><p>현장에서 QR을 찾아 인증하면 우리 팀 점수가 바로 올라갑니다.</p><dl><div><dt>장소</dt><dd>{detail.place}</dd></div><div><dt>운영</dt><dd>{detail.time}</dd></div><div><dt>획득</dt><dd>+{detail.score} P</dd></div></dl><button className="action-black sheet-action">미션 시작하기 <ChevronRight /></button></motion.aside>}</motion.div>}</AnimatePresence>
+  </div>;
 }
-
-export default App;
