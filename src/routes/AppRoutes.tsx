@@ -1098,10 +1098,16 @@ function StudentRoute({ children }: { children: ReactNode }) {
   }
   return children;
 }
+function RootRoute({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  if (auth.loading) return <Loading />;
+  if (!auth.user) return <Navigate to="/login" replace />;
+  return <StudentRoute>{children}</StudentRoute>;
+}
 export function AppRoutes({ home }: { home: ReactNode }) {
   return (
     <Routes>
-      <Route path="/" element={<StudentRoute>{home}</StudentRoute>} />
+      <Route path="/" element={<RootRoute>{home}</RootRoute>} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/account" element={<AccountSettingsPage />} />
       <Route path="/report" element={<StudentRoute><ReportPage /></StudentRoute>} />
