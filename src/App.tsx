@@ -4,10 +4,10 @@ import { Bell, ChevronLeft, ChevronRight, Clock3, Heart, Home, Map, MapPin, QrCo
 
 const TeamArtifact = lazy(() => import('./TeamArtifact'));
 const programs = [
-  { id: 1, category: 'MISSION', title: '분식부스의 비밀 메뉴', place: '운동장 A-04', time: '지금 참여 가능', score: 150, face: '🥤', tone: 'orange' },
-  { id: 2, category: 'PHOTO', title: '청룡 포토존 팀 인증', place: '본관 중앙', time: '18:00까지', score: 240, face: '📸', tone: 'blue' },
-  { id: 3, category: 'LIVE', title: '밴드부 앙코르 암호', place: '대강당', time: '17:20 시작', score: 320, face: '🎸', tone: 'lime' },
-  { id: 4, category: 'SECRET', title: '방송실에서 온 전파', place: '위치 비공개', time: '단 40분', score: 500, face: '📻', tone: 'violet' },
+  { id: 1, category: 'MISSION', title: '분식부스의 비밀 메뉴', place: '운동장 A-04', time: '지금 참여 가능', score: 150, face: '🥤', tone: 'orange', word: 'TASTE' },
+  { id: 2, category: 'PHOTO', title: '청룡 포토존 팀 인증', place: '본관 중앙', time: '18:00까지', score: 240, face: '📸', tone: 'blue', word: 'POSE' },
+  { id: 3, category: 'LIVE', title: '밴드부 앙코르 암호', place: '대강당', time: '17:20 시작', score: 320, face: '🎸', tone: 'lime', word: 'LOUD' },
+  { id: 4, category: 'SECRET', title: '방송실에서 온 전파', place: '위치 비공개', time: '단 40분', score: 500, face: '📻', tone: 'violet', word: 'TUNE' },
 ];
 const tabs = ['전체', '미션', '공연', '먹거리', '전시'];
 
@@ -15,7 +15,7 @@ function Mark() { return <a className="brand" href="#top"><span className="brand
 
 function ProgramCard({ item, index, onSelect }: { item: typeof programs[number]; index: number; onSelect: () => void }) {
   return <motion.article className="program-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * .04 }}>
-    <button className={`program-image ${item.tone}`} onClick={onSelect} aria-label={`${item.title} 자세히 보기`}><span className="program-number">0{index + 1}</span><span className="tossface program-face">{item.face}</span><span className="image-label">+{item.score} P</span></button>
+    <button className={`program-image ${item.tone}`} onClick={onSelect} aria-label={`${item.title} 자세히 보기`}><span className="program-number">0{index + 1}</span><strong className="poster-word">{item.word}</strong><span className="poster-orbit" /><span className="tossface program-face">{item.face}</span><span className="image-label">+{item.score} P</span></button>
     <div className="program-info"><div><span>{item.category}</span><button aria-label="관심 프로그램"><Heart /></button></div><h3>{item.title}</h3><p><MapPin /> {item.place}</p><p><Clock3 /> {item.time}</p></div>
   </motion.article>;
 }
