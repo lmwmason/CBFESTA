@@ -269,34 +269,58 @@ function SchedulePage() {
             placeholder="일정 검색"
           />
         </label>
-        <section className="listing-grid">
-          {programs.map((item) => {
-            const category = catalog?.categories?.find(
-              (candidate) => candidate.id === item.category_id,
-            );
-            const KindIcon = getKindIcon(item.kind);
-            return (
-              <Link to={`/schedule/${item.id}`} key={item.id}>
-                <div
-                  className="listing-thumb"
-                  style={
-                    item.cover_url
-                      ? {
-                          backgroundImage: `url(${item.cover_url})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }
-                      : { backgroundColor: category?.color ?? "#f0e4e9" }
-                  }
-                >
-                  {!item.cover_url && <KindIcon />}
-                </div>
-                <small>{category?.name ?? item.kind}</small>
-                <h2>{item.title}</h2>
-                <p>{item.description ?? "상세 정보 보기"}</p>
-              </Link>
-            );
-          })}
+        <section className="schedule-timeline">
+          {groupProgramsByDay(programs).map(([dayLabel, dayPrograms]) => (
+            <div className="timeline-day" key={dayLabel}>
+              <h2>{dayLabel}</h2>
+              <div className="timeline-list">
+                {dayPrograms.map((item) => {
+                  const category = catalog?.categories?.find(
+                    (candidate) => candidate.id === item.category_id,
+                  );
+                  const KindIcon = getKindIcon(item.kind);
+                  return (
+                    <Link
+                      to={`/schedule/${item.id}`}
+                      className="timeline-row"
+                      key={item.id}
+                    >
+                      <div className="timeline-time">
+                        <b>
+                          {item.starts_at
+                            ? new Intl.DateTimeFormat("ko-KR", {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }).format(new Date(item.starts_at))
+                            : "미정"}
+                        </b>
+                        {item.ends_at && (
+                          <small>
+                            ~
+                            {new Intl.DateTimeFormat("ko-KR", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }).format(new Date(item.ends_at))}
+                          </small>
+                        )}
+                      </div>
+                      <div
+                        className="timeline-marker"
+                        style={{ background: category?.color ?? "var(--accent)" }}
+                      >
+                        <KindIcon />
+                      </div>
+                      <div className="timeline-content">
+                        <small>{category?.name ?? item.kind}</small>
+                        <b>{item.title}</b>
+                        <p>{item.description ?? "상세 정보 보기"}</p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
           {programs.length === 0 && (
             <div className="catalog-empty">
               <CalendarDays />
@@ -307,6 +331,27 @@ function SchedulePage() {
       </main>
     </>
   );
+}
+function groupProgramsByDay(programs: Tables<"programs">[]) {
+  const groups = new Map<string, Tables<"programs">[]>();
+  const formatter = new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+    weekday: "short",
+  });
+  for (const item of programs) {
+    const label = item.starts_at
+      ? formatter.format(new Date(item.starts_at))
+      : "시간 미정";
+    const bucket = groups.get(label);
+    if (bucket) bucket.push(item);
+    else groups.set(label, [item]);
+  }
+  const undated = groups.get("시간 미정");
+  groups.delete("시간 미정");
+  const entries = [...groups.entries()];
+  if (undated) entries.push(["시간 미정", undated]);
+  return entries;
 }
 function ProgramDetailPage() {
   const { programId } = useParams();
