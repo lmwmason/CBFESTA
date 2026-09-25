@@ -16,6 +16,7 @@
     "@supabase/supabase-js": "2.117.1",
     "lucide-react": "1.48.0",
     "motion": "13.4.3",
+    "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-router-dom": "^7.18.4",
@@ -24,6 +25,7 @@
   "devDependencies": {
     "@eslint/js": "^9.36.0",
     "@types/node": "^24.5.2",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
     "@types/three": "^0.186.0",

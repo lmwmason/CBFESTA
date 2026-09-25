@@ -33,6 +33,13 @@ CBFESTA uses the following externally maintained software and visual assets. No 
 - License: MIT
 - Use in CBFESTA: authenticated access to the festival database, role-aware data, and asset storage.
 
+## node-qrcode
+
+- Source: https://github.com/soldair/node-qrcode
+- Version: qrcode 1.5.4
+- License: MIT
+- Use in CBFESTA: generates the scan-ready QR image for the dedicated booth monitor display.
+
 ## Three.js and React Three Fiber
 
 - Sources: https://github.com/mrdoob/three.js and https://github.com/pmndrs/react-three-fiber

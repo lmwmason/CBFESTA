@@ -31,6 +31,11 @@ import {
   AdminProgramsPage,
   NewProgramPage,
 } from "../features/admin/AdminProgramsPage";
+import {
+  BoothDisplayPage,
+  BoothDisplaySetupPage,
+  StudentCheckinPage,
+} from "../features/booth/BoothQrPages";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -381,10 +386,12 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth/check-in"
         element={
           <RoleRoute allow={["owner", "admin", "staff", "booth_operator"]}>
-            <UnavailablePage eyebrow="BOOTH DESK" title="참여 확인" />
+            <BoothDisplaySetupPage />
           </RoleRoute>
         }
       />
+      <Route path="/booth/:boothId/display" element={<BoothDisplayPage />} />
+      <Route path="/check-in" element={<StudentCheckinPage />} />
       <Route
         path="/booth/queue"
         element={
