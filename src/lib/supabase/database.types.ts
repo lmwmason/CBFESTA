@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          body: string
+          booth_id: number | null
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          festival_id: number
+          id: number
+          is_published: boolean
+          priority: string
+          published_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          booth_id?: number | null
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          festival_id: number
+          id?: never
+          is_published?: boolean
+          priority?: string
+          published_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          booth_id?: number | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          festival_id?: number
+          id?: never
+          is_published?: boolean
+          priority?: string
+          published_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "booths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_festival_id_fkey"
+            columns: ["festival_id"]
+            isOneToOne: false
+            referencedRelation: "festivals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booth_members: {
         Row: {
           booth_id: number
@@ -168,6 +228,55 @@ export type Database = {
           },
         ]
       }
+      checkins: {
+        Row: {
+          booth_id: number
+          checked_in_at: string
+          festival_id: number
+          id: number
+          qr_code_id: number | null
+          user_id: string
+        }
+        Insert: {
+          booth_id: number
+          checked_in_at?: string
+          festival_id: number
+          id?: never
+          qr_code_id?: number | null
+          user_id: string
+        }
+        Update: {
+          booth_id?: number
+          checked_in_at?: string
+          festival_id?: number
+          id?: never
+          qr_code_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkins_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "booths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkins_festival_id_fkey"
+            columns: ["festival_id"]
+            isOneToOne: false
+            referencedRelation: "festivals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checkins_qr_code_id_fkey"
+            columns: ["qr_code_id"]
+            isOneToOne: false
+            referencedRelation: "qr_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       festival_members: {
         Row: {
           created_at: string
@@ -259,6 +368,99 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      inventory_items: {
+        Row: {
+          booth_id: number
+          id: number
+          is_visible: boolean
+          low_stock_at: number
+          name: string
+          quantity: number
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          booth_id: number
+          id?: never
+          is_visible?: boolean
+          low_stock_at?: number
+          name: string
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          booth_id?: number
+          id?: never
+          is_visible?: boolean
+          low_stock_at?: number
+          name?: string
+          quantity?: number
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_items_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "booths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mission_completions: {
+        Row: {
+          completed_at: string
+          festival_id: number
+          id: number
+          points_awarded: number
+          program_id: number
+          team_id: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          festival_id: number
+          id?: never
+          points_awarded: number
+          program_id: number
+          team_id?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          festival_id?: number
+          id?: never
+          points_awarded?: number
+          program_id?: number
+          team_id?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_completions_festival_id_fkey"
+            columns: ["festival_id"]
+            isOneToOne: false
+            referencedRelation: "festivals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mission_completions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mission_completions_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -360,6 +562,228 @@ export type Database = {
           },
         ]
       }
+      qr_codes: {
+        Row: {
+          booth_id: number | null
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          festival_id: number
+          id: number
+          is_active: boolean
+          label: string
+          max_uses: number | null
+          program_id: number | null
+          token_hash: string
+          use_count: number
+        }
+        Insert: {
+          booth_id?: number | null
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          festival_id: number
+          id?: never
+          is_active?: boolean
+          label: string
+          max_uses?: number | null
+          program_id?: number | null
+          token_hash: string
+          use_count?: number
+        }
+        Update: {
+          booth_id?: number | null
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          festival_id?: number
+          id?: never
+          is_active?: boolean
+          label?: string
+          max_uses?: number | null
+          program_id?: number | null
+          token_hash?: string
+          use_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qr_codes_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "booths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_codes_festival_id_fkey"
+            columns: ["festival_id"]
+            isOneToOne: false
+            referencedRelation: "festivals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qr_codes_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      queue_entries: {
+        Row: {
+          booth_id: number
+          called_at: string | null
+          completed_at: string | null
+          id: number
+          joined_at: string
+          party_size: number
+          queue_number: number
+          status: string
+          user_id: string
+        }
+        Insert: {
+          booth_id: number
+          called_at?: string | null
+          completed_at?: string | null
+          id?: never
+          joined_at?: string
+          party_size?: number
+          queue_number: number
+          status?: string
+          user_id: string
+        }
+        Update: {
+          booth_id?: number
+          called_at?: string | null
+          completed_at?: string | null
+          id?: never
+          joined_at?: string
+          party_size?: number
+          queue_number?: number
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "queue_entries_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "booths"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          assignee_id: string | null
+          booth_id: number | null
+          category: string
+          created_at: string
+          description: string
+          festival_id: number
+          id: number
+          reporter_id: string
+          resolved_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          booth_id?: number | null
+          category: string
+          created_at?: string
+          description: string
+          festival_id: number
+          id?: never
+          reporter_id: string
+          resolved_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          booth_id?: number | null
+          category?: string
+          created_at?: string
+          description?: string
+          festival_id?: number
+          id?: never
+          reporter_id?: string
+          resolved_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_booth_id_fkey"
+            columns: ["booth_id"]
+            isOneToOne: false
+            referencedRelation: "booths"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_festival_id_fkey"
+            columns: ["festival_id"]
+            isOneToOne: false
+            referencedRelation: "festivals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      score_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          festival_id: number
+          id: number
+          points: number
+          reason: string | null
+          source: string
+          source_id: number | null
+          team_id: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          festival_id: number
+          id?: never
+          points: number
+          reason?: string | null
+          source: string
+          source_id?: number | null
+          team_id: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          festival_id?: number
+          id?: never
+          points?: number
+          reason?: string | null
+          source?: string
+          source_id?: number | null
+          team_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "score_events_festival_id_fkey"
+            columns: ["festival_id"]
+            isOneToOne: false
+            referencedRelation: "festivals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "score_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           joined_at: string
@@ -435,7 +859,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      create_qr_code_for_actor: {
+        Args: {
+          actor: string
+          code_label?: string
+          target_booth_id?: number
+          target_festival_id: number
+          target_program_id?: number
+        }
+        Returns: string
+      }
+      redeem_qr_for_actor: {
+        Args: { actor: string; raw_code: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

@@ -59,3 +59,74 @@ export async function signOut() {
   const { error } = await requireClient().auth.signOut();
   if (error) throw error;
 }
+
+export async function redeemQr(code: string) {
+  const { data, error } = await requireClient().functions.invoke('qr', { body: { action: 'redeem', code } });
+  if (error) throw error;
+  return data as { ok: true; type: 'checkin' | 'mission'; points: number; team_id: number | null };
+}
+
+export async function createQr(input: { festivalId: number; boothId?: number; programId?: number; label?: string }) {
+  const { data, error } = await requireClient().functions.invoke('qr', { body: { action: 'create', ...input } });
+  if (error) throw error;
+  return data as { code: string };
+}
+
+export async function joinQueue(boothId: number, userId: string, partySize = 1) {
+  const client = requireClient();
+  const { data: latest } = await client.from('queue_entries').select('queue_number').eq('booth_id', boothId).order('queue_number', { ascending: false }).limit(1).maybeSingle();
+  const { data, error } = await client.from('queue_entries').insert({ booth_id: boothId, user_id: userId, party_size: partySize, queue_number: (latest?.queue_number ?? 0) + 1 }).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateQueueEntry(id: number, status: Tables<'queue_entries'>['status']) {
+  const values: TablesUpdate<'queue_entries'> = { status };
+  if (status === 'called') values.called_at = new Date().toISOString();
+  if (['served', 'cancelled', 'no_show'].includes(status)) values.completed_at = new Date().toISOString();
+  const { data, error } = await requireClient().from('queue_entries').update(values).eq('id', id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function publishAnnouncement(values: TablesInsert<'announcements'>) {
+  const { data, error } = await requireClient().from('announcements').insert(values).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function createReport(values: TablesInsert<'reports'>) {
+  const { data, error } = await requireClient().from('reports').insert(values).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export function subscribeToFestival(festivalId: number, onChange: () => void) {
+  const client = requireClient();
+  const channel = client.channel(`festival:${festivalId}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'teams', filter: `festival_id=eq.${festivalId}` }, onChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'booths', filter: `festival_id=eq.${festivalId}` }, onChange)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements', filter: `festival_id=eq.${festivalId}` }, onChange)
+    .subscribe();
+  return () => { void client.removeChannel(channel); };
+}
+
+async function uploadPublicImage(bucket: 'team-logos' | 'booth-assets', path: string, file: File) {
+  if (!['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'].includes(file.type)) throw new Error('PNG, JPG, WEBP, SVG 이미지만 업로드할 수 있습니다.');
+  const limit = bucket === 'team-logos' ? 5_242_880 : 10_485_760;
+  if (file.size > limit) throw new Error(`파일은 ${limit / 1_048_576}MB 이하여야 합니다.`);
+  const client = requireClient();
+  const { error } = await client.storage.from(bucket).upload(path, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
+  if (error) throw error;
+  return client.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
+export function uploadTeamLogo(festivalId: number, teamId: number, file: File) {
+  const extension = file.name.split('.').pop()?.toLowerCase() || 'png';
+  return uploadPublicImage('team-logos', `${festivalId}/${teamId}/logo.${extension}`, file);
+}
+
+export function uploadBoothAsset(festivalId: number, boothId: number, slot: 'logo' | 'cover', file: File) {
+  const extension = file.name.split('.').pop()?.toLowerCase() || 'png';
+  return uploadPublicImage('booth-assets', `${festivalId}/${boothId}/${slot}.${extension}`, file);
+}
