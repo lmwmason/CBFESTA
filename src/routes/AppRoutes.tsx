@@ -39,6 +39,7 @@ import {
   BoothDisplaySetupPage,
   StudentCheckinPage,
 } from "../features/booth/BoothQrPages";
+import { BoothSettingsPage } from "../features/booth/BoothSettingsPage";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -441,7 +442,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth/settings"
         element={
           <RoleRoute allow={["owner", "admin", "booth_operator"]}>
-            <UnavailablePage eyebrow="CUSTOMIZE" title="부스 꾸미기" />
+            <BoothSettingsPage />
           </RoleRoute>
         }
       />
