@@ -104,7 +104,7 @@ export function NewProgramPage() {
         name: form.title,
         short_description: form.description || null,
         category_id: form.category_id ? Number(form.category_id) : null,
-        status: "draft",
+        status: "open",
       });
       navigate("/admin/booths");
     } catch (caught) {
@@ -126,7 +126,7 @@ export function NewProgramPage() {
           </Link>
           <span>CONTENT</span>
           <h1>새 부스</h1>
-          <p>처음에는 Draft로 저장되며, 준비가 끝나면 공개할 수 있습니다.</p>
+          <p>저장하면 학생 부스 목록에 바로 표시됩니다. 운영 상태는 부스 관리에서 바꿀 수 있습니다.</p>
         </div>
       </header>
       <form className="editor-form" onSubmit={submit}>
@@ -176,7 +176,7 @@ export function NewProgramPage() {
             취소
           </Link>
           <button className="primary-action" disabled={saving}>
-            <Save /> {saving ? "저장 중…" : "Draft 저장"}
+            <Save /> {saving ? "저장 중…" : "부스 등록"}
           </button>
         </footer>
       </form>
