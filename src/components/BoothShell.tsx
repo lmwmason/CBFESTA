@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { Package, QrCode, Store, Users } from "lucide-react";
+import { LogOut, Package, QrCode, Store, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { supabase } from "../lib/supabase/client";
 import { useAuth } from "../features/auth/auth-context";
@@ -13,7 +13,7 @@ const links = [
 ];
 
 export function BoothShell({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [boothName, setBoothName] = useState("");
   useEffect(() => {
     if (!supabase || !user) return;
@@ -31,8 +31,13 @@ export function BoothShell({ children }: { children: ReactNode }) {
   return (
     <div className="booth-shell">
       <header className="booth-shell-head">
-        <small>BOOTH DESK</small>
-        <b>{boothName || "부스 운영"}</b>
+        <div>
+          <small>BOOTH DESK</small>
+          <b>{boothName || "부스 운영"}</b>
+        </div>
+        <button onClick={() => void signOut()}>
+          <LogOut /> 로그아웃
+        </button>
       </header>
       <nav className="booth-shell-tabs">
         {links.map((link) => (

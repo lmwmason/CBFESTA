@@ -85,7 +85,7 @@ function Header() {
         <Link to="/map">MAP</Link>
         <Link to="/report">REPORT</Link>
         <Link to={user ? roleRoute(activeMembership?.role) : "/login"}>
-          {user ? "MY SPACE" : "ACCOUNT"}
+          ACCOUNT
         </Link>
       </nav>
     </header>
