@@ -594,3 +594,35 @@ a.metric.accent:hover { background: #000; }
   .catalog-search { margin-top: 16px; min-width: 0; }
   .hero-actions { flex-wrap: wrap; }
 }
+
+/* Site footer */
+.site-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; padding: 24px clamp(16px, 4vw, 64px); border-top: 1px solid var(--line); background: #fafaf9; }
+.site-footer-credit { display: flex; align-items: center; gap: 10px; }
+.site-footer-credit img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+.site-footer-credit span { display: grid; gap: 2px; }
+.site-footer-credit b { font-size: 12px; }
+.site-footer-credit small { font-size: 11px; color: var(--muted); }
+.site-footer-links { display: flex; gap: 18px; }
+.site-footer-links a { font-size: 11px; font-weight: 600; color: var(--secondary); }
+.site-footer-links a:hover { color: var(--strong); }
+@media (max-width: 767px) { .site-footer { padding-bottom: 90px; } }
+
+/* Reservations */
+.reservation-list { display: grid; gap: 10px; }
+.reservation-card { display: grid; grid-template-columns: 40px 1fr auto auto 36px; align-items: center; gap: 12px; padding: 14px 16px; background: #fff; border: 1px solid var(--line); }
+.reservation-card > i, .reservation-card > i img { width: 40px; height: 40px; border-radius: 50%; }
+.reservation-card > i { display: grid; place-items: center; color: #fff; font-weight: 700; overflow: hidden; }
+.reservation-card > i img { object-fit: cover; }
+.reservation-card > span { display: grid; gap: 2px; min-width: 0; }
+.reservation-card > span b { font-size: 13px; }
+.reservation-card > span small { color: var(--muted); font-size: 11px; }
+.reservation-card > strong { font-size: 18px; font-weight: 800; }
+.reservation-card em { padding: 4px 8px; font-style: normal; font-size: 10px; font-weight: 700; background: var(--warning-bg); color: var(--warning); }
+.reservation-card em.called { background: var(--success-bg); color: var(--success); }
+.reservation-card > button { width: 32px; height: 32px; display: grid; place-items: center; color: var(--danger); }
+.reservation-card > button svg { width: 15px; }
+@media (max-width: 767px) {
+  .reservation-card { grid-template-columns: 36px 1fr auto; grid-template-rows: auto auto; row-gap: 8px; }
+  .reservation-card em { grid-column: 3; }
+  .reservation-card > button { grid-column: 3; }
+}

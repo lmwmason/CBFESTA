@@ -6,12 +6,14 @@ import { AuthProvider } from "./features/auth/AuthProvider";
 import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "./routes/AppRoutes";
 import { MobileNav } from "./components/MobileNav";
+import { Footer } from "./components/Footer";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <AppRoutes home={<App />} />
+        <Footer />
         <MobileNav />
       </AuthProvider>
     </BrowserRouter>

@@ -5,6 +5,7 @@ import {
   ArrowRight,
   CalendarDays,
   ChevronRight,
+  LoaderCircle,
   MapPin,
   Plus,
   Search,
@@ -86,6 +87,7 @@ function Header() {
         <Link to="/booths">BOOTHS</Link>
         <Link to="/schedule">SCHEDULE</Link>
         <Link to="/teams">TEAMS</Link>
+        <Link to="/reservations">MY QUEUE</Link>
         <Link to="/map">MAP</Link>
         <Link to="/report">REPORT</Link>
       </nav>
@@ -402,7 +404,7 @@ type ReservationEntry = Tables<"queue_entries"> & {
 function ReservationsPage() {
   const { user } = useAuth();
   const [items, setItems] = useState<ReservationEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !!user);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
@@ -418,10 +420,7 @@ function ReservationsPage() {
   }, [user]);
 
   useEffect(() => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
+    if (!user) return;
     void getMyQueueEntries(user.id)
       .then((data) => setItems(data as ReservationEntry[]))
       .catch((caught) =>
