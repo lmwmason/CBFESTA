@@ -93,15 +93,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       name,
       studentNumber,
+      accountType,
     }: {
       email: string;
       password: string;
       name: string;
       studentNumber: string;
+      accountType: "student" | "teacher";
     }) => {
       if (!supabase) throw new Error("Supabase 설정이 필요합니다.");
       const { data, error } = await supabase.functions.invoke("register", {
-        body: { email, password, name, studentNumber },
+        body: { email, password, name, studentNumber, accountType },
       });
       if (error)
         throw new Error(

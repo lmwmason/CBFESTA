@@ -184,7 +184,6 @@ export function AdminDashboard() {
   const { activeMembership } = useAuth();
   const [counts, setCounts] = useState({
     booths: 0,
-    programs: 0,
     categories: 0,
     reports: 0,
   });
@@ -198,10 +197,6 @@ export function AdminDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("festival_id", festivalId),
       supabase
-        .from("programs")
-        .select("*", { count: "exact", head: true })
-        .eq("festival_id", festivalId),
-      supabase
         .from("categories")
         .select("*", { count: "exact", head: true })
         .eq("festival_id", festivalId),
@@ -210,10 +205,9 @@ export function AdminDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("festival_id", festivalId)
         .in("status", ["open", "acknowledged"]),
-    ]).then(([booths, programs, categories, reports]) => {
+    ]).then(([booths, categories, reports]) => {
       setCounts({
         booths: booths.count ?? 0,
-        programs: programs.count ?? 0,
         categories: categories.count ?? 0,
         reports: reports.count ?? 0,
       });
@@ -243,9 +237,9 @@ export function AdminDashboard() {
       <section className="metric-grid">
         <Metric label="BOOTHS" value={counts.booths} note="등록된 부스" />
         <Metric
-          label="PROGRAMS"
-          value={counts.programs}
-          note="등록된 프로그램"
+          label="BOOTHS"
+          value={counts.booths}
+          note="등록된 부스"
         />
         <Metric
           label="CATEGORIES"
@@ -268,11 +262,11 @@ export function AdminDashboard() {
           </span>
           <ArrowRight />
         </Link>
-        <Link className="work-panel operation-link" to="/admin/programs">
+        <Link className="work-panel operation-link" to="/admin/booths">
           <CalendarDays />
           <span>
-            <b>프로그램 관리</b>
-            <small>공연, 미션, 전시와 먹거리</small>
+            <b>부스 관리</b>
+            <small>사진, 먹거리, 게임 등 모든 부스</small>
           </span>
           <ArrowRight />
         </Link>

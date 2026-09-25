@@ -12,6 +12,7 @@ import {
   Route,
   Routes,
   useLocation,
+  useNavigate,
   useParams,
 } from "react-router-dom";
 import brandLogo from "../assets/cbfesta-logo.png";
@@ -27,6 +28,7 @@ import {
   NewCategoryPage,
 } from "../features/admin/AdminCategoriesPage";
 import { AdminPermissionsPage } from "../features/admin/AdminPermissionsPage";
+import { AdminAnnouncementsPage } from "../features/admin/AdminAnnouncementsPage";
 import {
   AdminProgramsPage,
   NewProgramPage,
@@ -44,15 +46,34 @@ function Header() {
     <header className="route-header">
       <Link to="/">
         <img src={brandLogo} alt="" />
-        <b>CBFESTA</b>
+        <span>
+          <b>CBFESTA</b>
+          <small>FESTIVAL PLATFORM</small>
+        </span>
       </Link>
       <nav>
-        <Link to="/programs">PROGRAMS</Link>
+        <Link to="/booths">BOOTHS</Link>
+        <Link to="/schedule">SCHEDULE</Link>
         <Link to="/teams">TEAMS</Link>
         <Link to="/map">MAP</Link>
-        <Link to="/login">MY</Link>
+        <Link to="/login">ACCOUNT</Link>
       </nav>
     </header>
+  );
+}
+function PageBack({ fallback = "/", label = "축제 홈" }: { fallback?: string; label?: string }) {
+  const navigate = useNavigate();
+  return (
+    <button
+      className="page-back route-back"
+      onClick={() =>
+        window.history.length > 1 ? navigate(-1) : navigate(fallback)
+      }
+      type="button"
+    >
+      <ArrowLeft aria-hidden="true" />
+      <span className="sr-only">{label}</span>
+    </button>
   );
 }
 function Loading() {
@@ -117,7 +138,7 @@ function LoginPage() {
     </main>
   );
 }
-function ProgramsPage() {
+function SchedulePage() {
   const { festival, catalog, loading, error } = usePublicCatalog();
   const [query, setQuery] = useState("");
   if (loading) return <Loading />;
@@ -138,17 +159,18 @@ function ProgramsPage() {
     <>
       <Header />
       <main className="listing-page">
+        <PageBack />
         <header>
-          <span>EXPLORE</span>
-          <h1>프로그램</h1>
-          <p>{festival.name}에서 지금 열려 있는 콘텐츠입니다.</p>
+          <span>FESTIVAL SCHEDULE</span>
+          <h1>일정</h1>
+          <p>{festival.name}의 공연, 행사와 미션 시간표입니다.</p>
         </header>
         <label className="catalog-search">
           <Search />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="프로그램 검색"
+            placeholder="일정 검색"
           />
         </label>
         <section className="listing-grid">
@@ -177,7 +199,7 @@ function ProgramsPage() {
           {programs.length === 0 && (
             <div className="catalog-empty">
               <CalendarDays />
-              <h3>표시할 프로그램이 없어요.</h3>
+              <h3>등록된 일정이 없어요.</h3>
             </div>
           )}
         </section>
@@ -199,7 +221,7 @@ function ProgramDetailPage() {
         <Header />
         <main className="listing-page simple-page">
           <h1>프로그램을 찾을 수 없어요.</h1>
-          <Link to="/programs">프로그램 목록</Link>
+          <Link to="/schedule">일정 목록</Link>
         </main>
       </>
     );
@@ -207,9 +229,7 @@ function ProgramDetailPage() {
     <>
       <Header />
       <main className="detail-page">
-        <Link className="back-link" to="/programs">
-          <ArrowLeft /> 프로그램 목록
-        </Link>
+        <PageBack fallback="/schedule" label="일정 목록" />
         <span>
           {catalog?.categories?.find((item) => item.id === program.category_id)
             ?.name ?? program.kind}
@@ -246,6 +266,7 @@ function TeamsPage() {
     <>
       <Header />
       <main className="listing-page teams-page">
+        <PageBack />
         <header>
           <span>LEADERBOARD</span>
           <h1>팀 랭킹</h1>
@@ -274,7 +295,7 @@ function TeamsPage() {
     </>
   );
 }
-function MapPage() {
+function BoothsPage() {
   const { festival, catalog, loading, error } = usePublicCatalog();
   if (loading) return <Loading />;
   if (error) return <ErrorPage message={error} />;
@@ -289,9 +310,10 @@ function MapPage() {
     <>
       <Header />
       <main className="listing-page">
+        <PageBack />
         <header>
-          <span>FESTIVAL MAP</span>
-          <h1>부스 안내</h1>
+          <span>BOOTH DIRECTORY</span>
+          <h1>부스</h1>
           <p>현재 공개된 부스와 운영 상태입니다.</p>
         </header>
         <section className="booth-list">
@@ -316,6 +338,9 @@ function MapPage() {
       </main>
     </>
   );
+}
+function MapPage() {
+  return <BoothsPage />;
 }
 function ErrorPage({ message }: { message: string }) {
   return (
@@ -370,9 +395,12 @@ export function AppRoutes({ home }: { home: ReactNode }) {
     <Routes>
       <Route path="/" element={home} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/programs" element={<ProgramsPage />} />
-      <Route path="/programs/:programId" element={<ProgramDetailPage />} />
+      <Route path="/programs" element={<Navigate to="/schedule" replace />} />
+      <Route path="/programs/:programId" element={<Navigate to="/schedule" replace />} />
+      <Route path="/schedule" element={<SchedulePage />} />
+      <Route path="/schedule/:programId" element={<ProgramDetailPage />} />
       <Route path="/teams" element={<TeamsPage />} />
+      <Route path="/booths" element={<BoothsPage />} />
       <Route path="/map" element={<MapPage />} />
       <Route
         path="/booth"
@@ -452,12 +480,12 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/announcements"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
-            <UnavailablePage eyebrow="ANNOUNCEMENTS" title="공지 관리" />
+            <AdminAnnouncementsPage />
           </RoleRoute>
         }
       />
       <Route
-        path="/admin/programs"
+        path="/admin/booths"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
             <AdminProgramsPage />
@@ -465,13 +493,15 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         }
       />
       <Route
-        path="/admin/programs/new"
+        path="/admin/booths/new"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
             <NewProgramPage />
           </RoleRoute>
         }
       />
+      <Route path="/admin/programs" element={<Navigate to="/admin/booths" replace />} />
+      <Route path="/admin/programs/new" element={<Navigate to="/admin/booths/new" replace />} />
       <Route
         path="/admin/issues"
         element={

@@ -6,6 +6,7 @@ import {
   LogOut,
   Mail,
   UserRound,
+  GraduationCap,
   X,
 } from "lucide-react";
 import { motion } from "motion/react";
@@ -27,6 +28,7 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
     password: "",
     name: "",
     studentNumber: "",
+    accountType: "student" as "student" | "teacher",
   });
   const [state, setState] = useState<"idle" | "saving">("idle");
   const [error, setError] = useState("");
@@ -155,13 +157,28 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
                 </div>
               </label>
               <label>
+                <span>계정 유형</span>
+                <div>
+                  <GraduationCap />
+                  <select
+                    value={form.accountType}
+                    onChange={(event) =>
+                      setForm({ ...form, accountType: event.target.value as "student" | "teacher" })
+                    }
+                  >
+                    <option value="student">학생</option>
+                    <option value="teacher">교직원</option>
+                  </select>
+                </div>
+              </label>
+              {form.accountType === "student" && <label>
                 <span>학번</span>
                 <div>
                   <Hash />
                   <input
                     autoComplete="off"
                     required
-                    pattern="[A-Za-z0-9-]{2,20}"
+                    pattern="[1-9][0-9]{3}"
                     value={form.studentNumber}
                     onChange={(event) =>
                       setForm({ ...form, studentNumber: event.target.value })
@@ -169,7 +186,7 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
                     placeholder="2309"
                   />
                 </div>
-              </label>
+              </label>}
             </div>
           )}
           <label>

@@ -88,6 +88,26 @@ export async function getAdminPrograms(festivalId: number) {
   return data;
 }
 
+export async function getAdminBooths(festivalId: number) {
+  const { data, error } = await requireClient()
+    .from("booths")
+    .select("*")
+    .eq("festival_id", festivalId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function createBooth(values: TablesInsert<"booths">) {
+  const { data, error } = await requireClient()
+    .from("booths")
+    .insert(values)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function createProgram(values: TablesInsert<"programs">) {
   const { data, error } = await requireClient()
     .from("programs")

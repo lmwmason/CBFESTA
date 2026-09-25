@@ -309,6 +309,14 @@ export type Database = {
           },
         ];
       };
+      festival_member_roles: {
+        Row: { festival_id: number; user_id: string; role: string; granted_at: string; };
+        Insert: { festival_id: number; user_id: string; role: string; granted_at?: string; };
+        Update: { festival_id?: number; user_id?: string; role?: string; granted_at?: string; };
+        Relationships: [
+          { foreignKeyName: "festival_member_roles_festival_id_fkey"; columns: ["festival_id"]; isOneToOne: false; referencedRelation: "festivals"; referencedColumns: ["id"]; },
+        ];
+      };
       festivals: {
         Row: {
           accent_color: string;

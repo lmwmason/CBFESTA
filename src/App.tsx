@@ -77,10 +77,10 @@ export default function App() {
       cancelled = true;
     };
   }, [membershipFestival]);
-  const programs = useMemo(
+  const booths = useMemo(
     () =>
-      (catalog?.programs ?? []).filter((program) =>
-        `${program.title} ${program.description ?? ""}`
+      (catalog?.booths ?? []).filter((booth) =>
+        `${booth.name} ${booth.short_description ?? ""} ${booth.location ?? ""}`
           .toLowerCase()
           .includes(query.toLowerCase()),
       ),
@@ -112,7 +112,7 @@ export default function App() {
           <span>FESTIVAL SETUP</span>
           <h1>축제를 준비하고 있어요.</h1>
           <p>
-            운영진이 단일 축제 설정을 완료하면 프로그램과 부스가 이곳에
+            운영진이 단일 축제 설정을 완료하면 부스와 일정이 이곳에
             표시됩니다.
           </p>
           {auth.user ? (
@@ -133,7 +133,8 @@ export default function App() {
       <header className="header">
         <Brand />
         <nav className="main-links">
-          <Link to="/programs">PROGRAMS</Link>
+          <Link to="/booths">BOOTHS</Link>
+          <Link to="/schedule">SCHEDULE</Link>
           <Link to="/teams">TEAMS</Link>
           <Link to="/map">MAP</Link>
         </nav>
@@ -144,7 +145,11 @@ export default function App() {
           >
             {auth.user ? (
               <>
-                <ShieldCheck /> MY SPACE
+                <ShieldCheck />
+                <span className="account-label">
+                  <small>{role === "admin" || role === "owner" ? "ADMIN" : role === "booth_operator" ? "BOOTH DESK" : "MY ACCOUNT"}</small>
+                  <b>{auth.user.user_metadata.full_name ?? "내 공간"}</b>
+                </span>
               </>
             ) : (
               <>
@@ -161,10 +166,10 @@ export default function App() {
               {formatDate(festival.starts_at)} · {festival.status.toUpperCase()}
             </span>
             <h1>{festival.name}</h1>
-            <p>지금 열려 있는 프로그램과 부스를 찾아보세요.</p>
+            <p>지금 열려 있는 부스와 축제 일정을 확인하세요.</p>
             <div className="hero-actions">
-              <Link className="primary-action" to="/programs">
-                <Search /> 프로그램 찾기
+              <Link className="primary-action" to="/booths">
+                <Search /> 부스 둘러보기
               </Link>
               {auth.user && (
                 <Link className="secondary-action" to={roleRoute(role)}>
@@ -177,7 +182,7 @@ export default function App() {
             <b>LIVE DIRECTORY</b>
             <dl>
               <div>
-                <dt>PROGRAMS</dt>
+                <dt>SCHEDULE</dt>
                 <dd>{catalog?.programs?.length ?? 0}</dd>
               </div>
               <div>
@@ -195,56 +200,54 @@ export default function App() {
           <header>
             <div>
               <span>EXPLORE</span>
-              <h2>프로그램</h2>
+              <h2>부스</h2>
             </div>
             <label className="catalog-search">
               <Search />
               <input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="프로그램, 부스 검색"
+                placeholder="부스 검색"
               />
             </label>
           </header>
-          {programs.length === 0 ? (
+          {booths.length === 0 ? (
             <div className="catalog-empty">
               <CalendarDays />
               <h3>
                 {query
                   ? "검색 결과가 없어요."
-                  : "공개된 프로그램이 아직 없어요."}
+                  : "공개된 부스가 아직 없어요."}
               </h3>
             </div>
           ) : (
             <div className="program-grid">
-              {programs.map((program) => (
+              {booths.map((booth) => (
                 <Link
                   className="live-program-card"
-                  to={`/programs/${program.id}`}
-                  key={program.id}
+                  to={`/booths`}
+                  key={booth.id}
                 >
                   <div
                     className="program-cover"
                     style={{
                       backgroundColor:
                         catalog?.categories?.find(
-                          (category) => category.id === program.category_id,
+                          (category) => category.id === booth.category_id,
                         )?.color ?? "#f0e4e9",
                     }}
                   >
-                    <span>{program.kind.toUpperCase()}</span>
-                    <b>
-                      {program.points > 0 ? `+${program.points} P` : "OPEN"}
-                    </b>
+                    <span>BOOTH</span>
+                    <b>{booth.status.toUpperCase()}</b>
                   </div>
                   <small>
                     {catalog?.categories?.find(
-                      (category) => category.id === program.category_id,
-                    )?.name ?? program.kind}
+                      (category) => category.id === booth.category_id,
+                    )?.name ?? "FESTIVAL BOOTH"}
                   </small>
-                  <h3>{program.title}</h3>
+                  <h3>{booth.name}</h3>
                   <p>
-                    {program.description ?? "상세 정보 보기"}
+                    {booth.short_description ?? booth.location ?? "부스 안내 보기"}
                     <ArrowRight />
                   </p>
                 </Link>

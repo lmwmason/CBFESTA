@@ -3,27 +3,27 @@ import { CalendarDays, LoaderCircle, Plus, Save } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Tables } from "../../lib/supabase/database.types";
 import {
-  createProgram,
+  createBooth,
   getAdminCategories,
-  getAdminPrograms,
+  getAdminBooths,
 } from "../../lib/supabase/services";
 import { useAuth } from "../auth/auth-context";
 
 export function AdminProgramsPage() {
   const { activeMembership } = useAuth();
   const festivalId = activeMembership?.festival_id;
-  const [programs, setPrograms] = useState<Tables<"programs">[]>([]);
+  const [booths, setBooths] = useState<Tables<"booths">[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   useEffect(() => {
     if (!festivalId) return;
-    void getAdminPrograms(festivalId)
-      .then(setPrograms)
+      void getAdminBooths(festivalId)
+      .then(setBooths)
       .catch((caught) =>
         setError(
           caught instanceof Error
             ? caught.message
-            : "프로그램을 불러오지 못했습니다.",
+            : "부스를 불러오지 못했습니다.",
         ),
       )
       .finally(() => setLoading(false));
@@ -33,11 +33,11 @@ export function AdminProgramsPage() {
       <header className="management-header">
         <div>
           <span>CONTENT</span>
-          <h1>프로그램</h1>
-          <p>학생에게 보여 줄 공연, 미션, 전시와 먹거리 콘텐츠를 관리합니다.</p>
+          <h1>부스</h1>
+          <p>학생에게 보여 줄 사진, 먹거리, 게임 등 모든 부스를 관리합니다.</p>
         </div>
-        <Link className="primary-action" to="/admin/programs/new">
-          <Plus /> 새 프로그램
+        <Link className="primary-action" to="/admin/booths/new">
+          <Plus /> 새 부스
         </Link>
       </header>
       {error && <p className="form-error">{error}</p>}
@@ -48,24 +48,24 @@ export function AdminProgramsPage() {
           </div>
         ) : (
           <>
-            {programs.map((program) => (
-              <article className="management-row program-row" key={program.id}>
+            {booths.map((booth) => (
+              <article className="management-row program-row" key={booth.id}>
                 <span>
-                  <b>{program.title}</b>
-                  <small>{program.kind}</small>
+                  <b>{booth.name}</b>
+                  <small>{booth.location ?? "LOCATION PENDING"}</small>
                 </span>
                 <code>
-                  {program.points > 0 ? `+${program.points} P` : "NO POINTS"}
+                  {booth.estimated_wait_minutes > 0 ? `${booth.estimated_wait_minutes} MIN` : "NO WAIT"}
                 </code>
-                <em>{program.status}</em>
-                <Link to={`/programs/${program.id}`}>보기</Link>
+                <em>{booth.status}</em>
+                <Link to={`/booths`}>보기</Link>
               </article>
             ))}
-            {programs.length === 0 && (
+            {booths.length === 0 && (
               <div className="management-empty">
                 <CalendarDays />
-                <h2>등록된 프로그램이 없어요.</h2>
-                <Link to="/admin/programs/new">첫 프로그램 만들기</Link>
+                <h2>등록된 부스가 없어요.</h2>
+                <Link to="/admin/booths/new">첫 부스 만들기</Link>
               </div>
             )}
           </>
@@ -83,8 +83,6 @@ export function NewProgramPage() {
   const [form, setForm] = useState({
     title: "",
     description: "",
-    kind: "mission",
-    points: 0,
     category_id: "",
   });
   const [saving, setSaving] = useState(false);
@@ -101,21 +99,19 @@ export function NewProgramPage() {
     setSaving(true);
     setError("");
     try {
-      await createProgram({
+      await createBooth({
         festival_id: festivalId,
-        title: form.title,
-        description: form.description || null,
-        kind: form.kind,
-        points: form.points,
+        name: form.title,
+        short_description: form.description || null,
         category_id: form.category_id ? Number(form.category_id) : null,
         status: "draft",
       });
-      navigate("/admin/programs");
+      navigate("/admin/booths");
     } catch (caught) {
       setError(
         caught instanceof Error
           ? caught.message
-          : "프로그램을 저장하지 못했습니다.",
+          : "부스를 저장하지 못했습니다.",
       );
     } finally {
       setSaving(false);
@@ -125,12 +121,12 @@ export function NewProgramPage() {
     <main className="management-page">
       <header className="management-header">
         <div>
-          <Link className="back-link" to="/admin/programs">
-            프로그램 목록
+          <Link className="back-link" to="/admin/booths">
+            부스 목록
           </Link>
           <span>CONTENT</span>
-          <h1>새 프로그램</h1>
-          <p>처음에는 Draft로 저장되며, 검토 후 공개할 수 있습니다.</p>
+          <h1>새 부스</h1>
+          <p>처음에는 Draft로 저장되며, 준비가 끝나면 공개할 수 있습니다.</p>
         </div>
       </header>
       <form className="editor-form" onSubmit={submit}>
@@ -143,7 +139,7 @@ export function NewProgramPage() {
             onChange={(event) =>
               setForm({ ...form, title: event.target.value })
             }
-            placeholder="예: 밴드부 저녁 공연"
+            placeholder="예: 사진 부스"
           />
         </label>
         <label>
@@ -158,27 +154,15 @@ export function NewProgramPage() {
           />
         </label>
         <label>
-          <span>유형</span>
-          <select
-            value={form.kind}
-            onChange={(event) => setForm({ ...form, kind: event.target.value })}
-          >
-            <option value="mission">Mission</option>
-            <option value="performance">Performance</option>
-            <option value="food">Food</option>
-            <option value="exhibition">Exhibition</option>
-            <option value="other">Other</option>
-          </select>
-        </label>
-        <label>
           <span>카테고리</span>
           <select
+            required
             value={form.category_id}
             onChange={(event) =>
               setForm({ ...form, category_id: event.target.value })
             }
           >
-            <option value="">선택 안 함</option>
+            <option value="">부스 카테고리 선택</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -186,21 +170,9 @@ export function NewProgramPage() {
             ))}
           </select>
         </label>
-        <label>
-          <span>미션 포인트</span>
-          <input
-            type="number"
-            min="0"
-            max="100000"
-            value={form.points}
-            onChange={(event) =>
-              setForm({ ...form, points: Number(event.target.value) })
-            }
-          />
-        </label>
         {error && <p className="form-error">{error}</p>}
         <footer>
-          <Link className="secondary-action" to="/admin/programs">
+          <Link className="secondary-action" to="/admin/booths">
             취소
           </Link>
           <button className="primary-action" disabled={saving}>
