@@ -78,7 +78,7 @@ export function BoothDisplayPage() {
   useEffect(() => {
     if (!code) return;
     void QRCode.toDataURL(
-      `${window.location.origin}/check-in?code=${encodeURIComponent(code)}&booth=${encodeURIComponent(booth?.name ?? "부스")}`,
+      `${window.location.origin}/check-in?code=${encodeURIComponent(code)}&booth=${encodeURIComponent(booth?.name ?? "부스")}&logo=${encodeURIComponent(booth?.logo_url ?? "")}`,
       {
         width: 640,
         margin: 1,
@@ -86,7 +86,7 @@ export function BoothDisplayPage() {
         color: { dark: "#121212", light: "#00000000" },
       },
     ).then(setImage);
-  }, [code, booth?.name]);
+  }, [code, booth?.name, booth?.logo_url]);
 
   useEffect(() => {
     const id = Number(boothId);
@@ -156,6 +156,7 @@ export function StudentCheckinPage() {
   );
   const [message, setMessage] = useState("");
   const [targetName, setTargetName] = useState(() => params.get("booth") ?? "");
+  const [targetLogo, setTargetLogo] = useState(() => params.get("logo") ?? "");
   useEffect(() => {
     QrScanner.WORKER_PATH = qrScannerWorkerPath;
     if (code || state !== "idle" || !videoRef.current) return;
@@ -166,13 +167,20 @@ export function StudentCheckinPage() {
           const scannedUrl = new URL(data);
           const scannedCode = scannedUrl.searchParams.get("code");
           const scannedBooth = scannedUrl.searchParams.get("booth");
+          const scannedLogo = scannedUrl.searchParams.get("logo");
           if (scannedUrl.pathname !== "/check-in" || !scannedCode) {
             setMessage("CBFESTA 체크인 QR이 아닙니다.");
             return;
           }
           setCode(scannedCode);
           setTargetName(scannedBooth ?? "");
-          setParams(scannedBooth ? { code: scannedCode, booth: scannedBooth } : { code: scannedCode }, { replace: true });
+          setTargetLogo(scannedLogo ?? "");
+          setParams(
+            scannedBooth
+              ? { code: scannedCode, booth: scannedBooth, ...(scannedLogo ? { logo: scannedLogo } : {}) }
+              : { code: scannedCode },
+            { replace: true },
+          );
         } catch {
           setMessage("CBFESTA 체크인 QR이 아닙니다.");
         }
@@ -196,7 +204,7 @@ export function StudentCheckinPage() {
   const checkin = async () => {
     if (!code) return;
     if (!user) {
-      const next = `/check-in?code=${encodeURIComponent(code)}${targetName ? `&booth=${encodeURIComponent(targetName)}` : ""}`;
+      const next = `/check-in?code=${encodeURIComponent(code)}${targetName ? `&booth=${encodeURIComponent(targetName)}` : ""}${targetLogo ? `&logo=${encodeURIComponent(targetLogo)}` : ""}`;
       navigate(`/login?next=${encodeURIComponent(next)}`);
       return;
     }
@@ -228,7 +236,10 @@ export function StudentCheckinPage() {
       <span>CHECK-IN</span>
       {state === "idle" && code && user ? (
         <>
-          <p className="checkin-target-label">방문할 부스</p>
+          <p className="checkin-target-label">방문한 부스</p>
+          <div className="checkin-booth-logo">
+            {targetLogo ? <img src={targetLogo} alt="" /> : <Store />}
+          </div>
           <h1>{targetName || "부스"}</h1>
           <p>이 부스를 방문한 것이 맞는지 확인해 주세요.</p>
           <button className="primary-action" onClick={() => void checkin()}>
@@ -265,6 +276,7 @@ export function StudentCheckinPage() {
             setState("idle");
             setMessage("");
             setTargetName("");
+            setTargetLogo("");
             setCode(null);
             setParams({}, { replace: true });
           }}
