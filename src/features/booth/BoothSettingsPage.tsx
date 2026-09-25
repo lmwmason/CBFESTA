@@ -172,9 +172,12 @@ export function BoothSettingsPage() {
         <label>
           <span>상세 안내</span>
           <textarea
+            rows={8}
             value={form.description}
             onChange={(e) => setForm({ ...form, description: e.target.value })}
+            placeholder={"마크다운으로 작성할 수 있어요.\n예: **굵게**, *기울임*, - 목록, [링크](https://...)"}
           />
+          <small>마크다운 문법을 지원합니다. (굵게, 기울임, 목록, 링크 등)</small>
         </label>
         <label>
           <span>위치</span>

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   AlertTriangle,
   ArrowLeft,
@@ -67,7 +68,7 @@ import {
   NewTeamPage,
 } from "../features/admin/AdminTeamsPage";
 import { AdminFestivalSettingsPage } from "../features/admin/AdminFestivalSettingsPage";
-import { getCategoryIcon, getKindIcon } from "../lib/categoryIcons";
+import { getCategoryIcon } from "../lib/categoryIcons";
 import { AccountMenu } from "../components/AccountMenu";
 import { ReportForm } from "../features/reports/ReportSheet";
 import { AdminShell } from "../components/AdminShell";
@@ -278,7 +279,6 @@ function SchedulePage() {
                   const category = catalog?.categories?.find(
                     (candidate) => candidate.id === item.category_id,
                   );
-                  const KindIcon = getKindIcon(item.kind);
                   return (
                     <Link
                       to={`/schedule/${item.id}`}
@@ -306,12 +306,10 @@ function SchedulePage() {
                       </div>
                       <div
                         className="timeline-marker"
-                        style={{ background: category?.color ?? "var(--accent)" }}
-                      >
-                        <KindIcon />
-                      </div>
+                        style={{ background: category?.color ?? "var(--strong)" }}
+                      />
                       <div className="timeline-content">
-                        <small>{category?.name ?? item.kind}</small>
+                        {category?.name && <small>{category.name}</small>}
                         <b>{item.title}</b>
                         <p>{item.description ?? "상세 정보 보기"}</p>
                       </div>
@@ -779,9 +777,13 @@ function BoothDetailPage() {
           )}
           {booth.name}
         </h1>
-        <p>
-          {booth.description ?? booth.short_description ?? "상세 설명이 아직 등록되지 않았습니다."}
-        </p>
+        {booth.description ? (
+          <div className="booth-description">
+            <ReactMarkdown>{booth.description}</ReactMarkdown>
+          </div>
+        ) : (
+          <p>{booth.short_description ?? "상세 설명이 아직 등록되지 않았습니다."}</p>
+        )}
         <dl>
           <div>
             <dt>위치</dt>
