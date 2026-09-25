@@ -1,0 +1,22 @@
+import { useEffect, useState, type FormEvent } from "react";
+import { CalendarPlus, LoaderCircle, Plus, Save } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import type { Tables } from "../../lib/supabase/database.types";
+import { createProgram, getAdminBooths, getAdminPrograms } from "../../lib/supabase/services";
+import { useAuth } from "../auth/auth-context";
+
+export function AdminSchedulePage() {
+  const { activeMembership } = useAuth(); const festivalId = activeMembership?.festival_id;
+  const [items, setItems] = useState<Tables<"programs">[]>([]); const [loading, setLoading] = useState(true);
+  useEffect(() => { if (!festivalId) return; void getAdminPrograms(festivalId).then(setItems).finally(() => setLoading(false)); }, [festivalId]);
+  return <main className="management-page"><header className="management-header"><div><span>FESTIVAL SCHEDULE</span><h1>일정 관리</h1><p>공연, 안내, 부스 운영 시간을 등록하면 학생 일정에 바로 표시됩니다.</p></div><Link className="primary-action" to="/admin/schedule/new"><Plus /> 일정 추가</Link></header><section className="management-table">{loading ? <div className="management-loading"><LoaderCircle /> 불러오는 중…</div> : items.map((item) => <article className="management-row program-row" key={item.id}><span><b>{item.title}</b><small>{item.starts_at ? new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(item.starts_at)) : "시간 미정"}</small></span><code>{item.ends_at ? "종료 시간 등록" : "종료 미정"}</code><em>{item.status}</em></article>)}{!items.length && <div className="management-empty"><CalendarPlus /><h2>등록된 일정이 없어요.</h2><Link to="/admin/schedule/new">첫 일정 추가</Link></div>}</section></main>;
+}
+
+export function NewSchedulePage() {
+  const { activeMembership } = useAuth(); const festivalId = activeMembership?.festival_id; const navigate = useNavigate();
+  const [booths, setBooths] = useState<Tables<"booths">[]>([]); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
+  const [form, setForm] = useState({ title: "", location: "", boothId: "", startsAt: "", endsAt: "", description: "" });
+  useEffect(() => { if (festivalId) void getAdminBooths(festivalId).then(setBooths); }, [festivalId]);
+  const submit = async (event: FormEvent) => { event.preventDefault(); if (!festivalId) return; setSaving(true); setError(""); try { await createProgram({ festival_id: festivalId, title: form.title, description: form.description || (form.location ? `장소: ${form.location}` : null), booth_id: form.boothId ? Number(form.boothId) : null, starts_at: new Date(form.startsAt).toISOString(), ends_at: form.endsAt ? new Date(form.endsAt).toISOString() : null, kind: "other", status: "published" }); navigate("/admin/schedule"); } catch (caught) { setError(caught instanceof Error ? caught.message : "일정을 저장하지 못했습니다."); } finally { setSaving(false); } };
+  return <main className="management-page"><header className="management-header"><div><Link className="back-link" to="/admin/schedule">일정 목록</Link><span>NEW SCHEDULE</span><h1>일정 추가</h1><p>시작 시간은 필수입니다.</p></div></header><form className="editor-form" onSubmit={submit}><label><span>일정 제목</span><input required maxLength={100} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="예: 사진 부스 운영 시작" /></label><label><span>연결 부스</span><select value={form.boothId} onChange={(e) => setForm({ ...form, boothId: e.target.value })}><option value="">부스 연결 안 함</option>{booths.map((booth) => <option value={booth.id} key={booth.id}>{booth.name}</option>)}</select></label><label><span>장소</span><input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} placeholder="예: 본관 앞 광장" /></label><label><span>시작 시간</span><input required type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} /></label><label><span>종료 시간</span><input type="datetime-local" min={form.startsAt} value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} /></label><label><span>안내</span><textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="학생에게 보일 안내" /></label>{error && <p className="form-error">{error}</p>}<footer><Link className="secondary-action" to="/admin/schedule">취소</Link><button className="primary-action" disabled={saving}><Save /> {saving ? "저장 중…" : "일정 등록"}</button></footer></form></main>;
+}

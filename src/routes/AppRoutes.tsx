@@ -29,6 +29,7 @@ import {
 } from "../features/admin/AdminCategoriesPage";
 import { AdminPermissionsPage } from "../features/admin/AdminPermissionsPage";
 import { AdminAnnouncementsPage } from "../features/admin/AdminAnnouncementsPage";
+import { AdminSchedulePage, NewSchedulePage } from "../features/admin/AdminSchedulePage";
 import {
   AdminProgramsPage,
   NewProgramPage,
@@ -500,6 +501,8 @@ export function AppRoutes({ home }: { home: ReactNode }) {
           </RoleRoute>
         }
       />
+      <Route path="/admin/schedule" element={<RoleRoute allow={["owner", "admin", "staff"]}><AdminSchedulePage /></RoleRoute>} />
+      <Route path="/admin/schedule/new" element={<RoleRoute allow={["owner", "admin", "staff"]}><NewSchedulePage /></RoleRoute>} />
       <Route path="/admin/programs" element={<Navigate to="/admin/booths" replace />} />
       <Route path="/admin/programs/new" element={<Navigate to="/admin/booths/new" replace />} />
       <Route

@@ -181,7 +181,7 @@ function Metric({
 }
 
 export function AdminDashboard() {
-  const { activeMembership } = useAuth();
+  const { activeMembership, activeRoles } = useAuth();
   const [counts, setCounts] = useState({
     booths: 0,
     categories: 0,
@@ -230,9 +230,10 @@ export function AdminDashboard() {
             <i /> 사름제-2026 데이터가 실시간으로 반영됩니다.
           </p>
         </div>
-        <Link className="primary-action" to="/admin/announcements">
-          <Megaphone /> 공지 작성
-        </Link>
+        <div className="workspace-head-actions">
+          {activeRoles.includes("booth_operator") && <Link className="secondary-action" to="/booth"><Store /> 부스 운영</Link>}
+          <Link className="primary-action" to="/admin/announcements"><Megaphone /> 공지 작성</Link>
+        </div>
       </header>
       <section className="metric-grid">
         <Metric label="BOOTHS" value={counts.booths} note="등록된 부스" />
