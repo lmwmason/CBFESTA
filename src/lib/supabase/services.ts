@@ -67,6 +67,45 @@ export async function getFestivalCatalog(festivalId: number) {
   };
 }
 
+export async function getAnnouncements(festivalId: number) {
+  const { data, error } = await requireClient()
+    .from("announcements")
+    .select("*")
+    .eq("festival_id", festivalId)
+    .eq("is_published", true)
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
+    .order("priority", { ascending: false })
+    .order("published_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getBoothDetail(boothId: number) {
+  const client = requireClient();
+  const [booth, inventory, announcements] = await Promise.all([
+    client.from("booths").select("*").eq("id", boothId).single(),
+    client
+      .from("inventory_items")
+      .select("*")
+      .eq("booth_id", boothId)
+      .eq("is_visible", true)
+      .order("sort_order"),
+    client
+      .from("announcements")
+      .select("*")
+      .eq("booth_id", boothId)
+      .eq("is_published", true)
+      .order("published_at", { ascending: false }),
+  ]);
+  const error = booth.error ?? inventory.error ?? announcements.error;
+  if (error) throw error;
+  return {
+    booth: booth.data,
+    inventory: inventory.data ?? [],
+    announcements: announcements.data ?? [],
+  };
+}
+
 export async function getAdminCategories(festivalId: number) {
   const { data, error } = await requireClient()
     .from("categories")
@@ -151,6 +190,51 @@ export async function updateBooth(id: number, values: TablesUpdate<"booths">) {
     .single();
   if (error) throw error;
   return data;
+}
+
+export async function getBoothInventory(boothId: number) {
+  const { data, error } = await requireClient()
+    .from("inventory_items")
+    .select("*")
+    .eq("booth_id", boothId)
+    .order("sort_order")
+    .order("id");
+  if (error) throw error;
+  return data;
+}
+
+export async function createInventoryItem(
+  values: TablesInsert<"inventory_items">,
+) {
+  const { data, error } = await requireClient()
+    .from("inventory_items")
+    .insert(values)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateInventoryItem(
+  id: number,
+  values: TablesUpdate<"inventory_items">,
+) {
+  const { data, error } = await requireClient()
+    .from("inventory_items")
+    .update(values)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteInventoryItem(id: number) {
+  const { error } = await requireClient()
+    .from("inventory_items")
+    .delete()
+    .eq("id", id);
+  if (error) throw error;
 }
 
 export async function updateMemberRole(
@@ -260,6 +344,123 @@ export async function updateQueueEntry(
   return data;
 }
 
+export async function getBoothQueue(boothId: number) {
+  const { data, error } = await requireClient()
+    .from("queue_entries")
+    .select("*")
+    .eq("booth_id", boothId)
+    .in("status", ["waiting", "called"])
+    .order("queue_number");
+  if (error) throw error;
+  return data;
+}
+
+export async function getMyQueueEntry(boothId: number, userId: string) {
+  const { data, error } = await requireClient()
+    .from("queue_entries")
+    .select("*")
+    .eq("booth_id", boothId)
+    .eq("user_id", userId)
+    .in("status", ["waiting", "called"])
+    .order("joined_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function getAdminReports(festivalId: number) {
+  const { data, error } = await requireClient()
+    .from("reports")
+    .select("*")
+    .eq("festival_id", festivalId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function updateReport(id: number, values: TablesUpdate<"reports">) {
+  const { data, error } = await requireClient()
+    .from("reports")
+    .update(values)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getAdminTeams(festivalId: number) {
+  const { data, error } = await requireClient()
+    .from("teams")
+    .select("*")
+    .eq("festival_id", festivalId)
+    .order("name");
+  if (error) throw error;
+  return data;
+}
+
+export async function createTeam(values: TablesInsert<"teams">) {
+  const { data, error } = await requireClient()
+    .from("teams")
+    .insert(values)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateTeam(id: number, values: TablesUpdate<"teams">) {
+  const { data, error } = await requireClient()
+    .from("teams")
+    .update(values)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getTeamRoster(festivalId: number) {
+  const client = requireClient();
+  const { data: teams, error: teamError } = await client
+    .from("teams")
+    .select("id")
+    .eq("festival_id", festivalId);
+  if (teamError) throw teamError;
+  const teamIds = (teams ?? []).map((team) => team.id);
+  if (!teamIds.length) return [];
+  const { data: members, error } = await client
+    .from("team_members")
+    .select("*")
+    .in("team_id", teamIds);
+  if (error) throw error;
+  const ids = (members ?? []).map((member) => member.user_id);
+  const { data: profiles, error: profileError } = ids.length
+    ? await client
+        .from("profiles")
+        .select("id, display_name, student_number")
+        .in("id", ids)
+    : { data: [], error: null };
+  if (profileError) throw profileError;
+  const profileById = new Map(
+    (profiles ?? []).map((profile) => [profile.id, profile]),
+  );
+  return (members ?? []).map((member) => ({
+    ...member,
+    profile: profileById.get(member.user_id) ?? null,
+  }));
+}
+
+export async function balanceTeams(festivalId: number) {
+  const { data, error } = await requireClient().rpc(
+    "assign_unassigned_students_to_teams",
+    { target_festival_id: festivalId },
+  );
+  if (error) throw error;
+  return data?.[0] ?? { assigned_count: 0, unassigned_count: 0 };
+}
+
 export async function publishAnnouncement(
   values: TablesInsert<"announcements">,
 ) {
@@ -313,6 +514,39 @@ export function subscribeToFestival(festivalId: number, onChange: () => void) {
         schema: "public",
         table: "announcements",
         filter: `festival_id=eq.${festivalId}`,
+      },
+      onChange,
+    )
+    .subscribe();
+  return () => {
+    void client.removeChannel(channel);
+  };
+}
+
+export function subscribeToBoothOperations(
+  boothId: number,
+  onChange: () => void,
+) {
+  const client = requireClient();
+  const channel = client
+    .channel(`booth-ops:${boothId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "queue_entries",
+        filter: `booth_id=eq.${boothId}`,
+      },
+      onChange,
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "inventory_items",
+        filter: `booth_id=eq.${boothId}`,
       },
       onChange,
     )

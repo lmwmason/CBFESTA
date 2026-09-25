@@ -888,6 +888,10 @@ export type Database = {
         Args: { actor: string; raw_code: string };
         Returns: Json;
       };
+      assign_unassigned_students_to_teams: {
+        Args: { target_festival_id: number };
+        Returns: { assigned_count: number; unassigned_count: number }[];
+      };
     };
     Enums: {
       [_ in never]: never;
