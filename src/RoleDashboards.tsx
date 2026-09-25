@@ -108,7 +108,7 @@ export function BoothDashboard() {
           <QrCode /> CHECK-IN
         </Link>
       </header>
-      <section className="metric-grid">
+      <section className="metric-grid metrics-3">
         <Metric label="CHECK-INS" value={checkinCount} note="누적 참여 확인" />
         <Metric
           label="LIVE QUEUE"
@@ -122,7 +122,7 @@ export function BoothDashboard() {
           note="부스 운영 상태"
         />
       </section>
-      <section className="workspace-grid">
+      <section className="workspace-actions">
         <Link className="work-panel operation-link" to="/booth/check-in">
           <ClipboardCheck />
           <span>
@@ -259,7 +259,7 @@ export function AdminDashboard() {
           accent
         />
       </section>
-      <section className="workspace-grid">
+      <section className="workspace-actions">
         <Link className="work-panel operation-link" to="/admin/categories">
           <Tags />
           <span>
