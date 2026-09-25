@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Save, Store } from "lucide-react";
+import { Save } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import type { Tables } from "../../lib/supabase/database.types";
 import { supabase } from "../../lib/supabase/client";

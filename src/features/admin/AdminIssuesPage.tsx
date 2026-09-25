@@ -42,8 +42,16 @@ export function AdminIssuesPage() {
   }, [festivalId]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    if (!festivalId) return;
+    void getAdminReports(festivalId)
+      .then(setItems)
+      .catch((caught) =>
+        setError(
+          caught instanceof Error ? caught.message : "신고를 불러오지 못했습니다.",
+        ),
+      )
+      .finally(() => setLoading(false));
+  }, [festivalId]);
 
   const shown = useMemo(
     () => (tab === "all" ? items : items.filter((item) => item.status === tab)),

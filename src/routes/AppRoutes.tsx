@@ -1,11 +1,13 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
+  AlertTriangle,
   ArrowLeft,
   ArrowRight,
   CalendarDays,
   ChevronRight,
   MapPin,
   Search,
+  Users,
 } from "lucide-react";
 import {
   Link,
@@ -20,8 +22,12 @@ import {
 import brandLogo from "../assets/cbfesta-logo.png";
 import type { Tables } from "../lib/supabase/database.types";
 import {
+  getBoothDetail,
   getCurrentFestival,
   getFestivalCatalog,
+  getMyQueueEntry,
+  joinQueue,
+  subscribeToBoothOperations,
 } from "../lib/supabase/services";
 import { AdminDashboard, BoothDashboard } from "../RoleDashboards";
 import { AuthSheet } from "../features/auth/AuthSheet";
@@ -374,7 +380,7 @@ function BoothsPage() {
         </header>
         <section className="booth-list">
           {(catalog?.booths ?? []).map((booth) => (
-            <article key={booth.id}>
+            <Link to={`/booths/${booth.id}`} key={booth.id}>
               <i style={{ backgroundColor: booth.accent_color }} />
               <span>
                 <b>{booth.name}</b>
@@ -382,7 +388,7 @@ function BoothsPage() {
               </span>
               <em>{booth.status}</em>
               <ChevronRight />
-            </article>
+            </Link>
           ))}
           {!(catalog?.booths ?? []).length && (
             <div className="catalog-empty">
@@ -391,6 +397,167 @@ function BoothsPage() {
             </div>
           )}
         </section>
+      </main>
+    </>
+  );
+}
+function BoothDetailPage() {
+  const { boothId } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const id = Number(boothId);
+  const [detail, setDetail] = useState<Awaited<
+    ReturnType<typeof getBoothDetail>
+  > | null>(null);
+  const [myQueue, setMyQueue] = useState<Tables<"queue_entries"> | null>(
+    null,
+  );
+  const [loading, setLoading] = useState(true);
+  const [joining, setJoining] = useState(false);
+  const [error, setError] = useState("");
+
+  const refresh = useCallback(async () => {
+    try {
+      const data = await getBoothDetail(id);
+      setDetail(data);
+      setMyQueue(user ? await getMyQueueEntry(id, user.id) : null);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "부스 정보를 불러오지 못했습니다.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [id, user]);
+
+  useEffect(() => {
+    if (Number.isNaN(id)) return;
+    void getBoothDetail(id)
+      .then(async (data) => {
+        setDetail(data);
+        setMyQueue(user ? await getMyQueueEntry(id, user.id) : null);
+      })
+      .catch((caught) =>
+        setError(
+          caught instanceof Error ? caught.message : "부스 정보를 불러오지 못했습니다.",
+        ),
+      )
+      .finally(() => setLoading(false));
+  }, [id, user]);
+  useEffect(() => {
+    if (Number.isNaN(id)) return;
+    return subscribeToBoothOperations(id, () => void refresh());
+  }, [id, refresh]);
+
+  const join = async () => {
+    if (!user) {
+      navigate(`/login?next=${encodeURIComponent(`/booths/${id}`)}`);
+      return;
+    }
+    setJoining(true);
+    setError("");
+    try {
+      await joinQueue(id);
+      await refresh();
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "줄서기에 실패했습니다.",
+      );
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  if (loading) return <Loading />;
+  if (!detail?.booth)
+    return (
+      <>
+        <Header />
+        <main className="listing-page simple-page">
+          <h1>부스를 찾을 수 없어요.</h1>
+          <Link to="/booths">부스 목록</Link>
+        </main>
+      </>
+    );
+  const { booth, inventory, announcements } = detail;
+  return (
+    <>
+      <Header />
+      <main className="detail-page">
+        <PageBack fallback="/booths" label="부스 목록" />
+        <span>{booth.status.toUpperCase()}</span>
+        <h1>{booth.name}</h1>
+        <p>
+          {booth.description ?? booth.short_description ?? "상세 설명이 아직 등록되지 않았습니다."}
+        </p>
+        <dl>
+          <div>
+            <dt>위치</dt>
+            <dd>{booth.location ?? "안내 예정"}</dd>
+          </div>
+          <div>
+            <dt>예상 대기</dt>
+            <dd>
+              {booth.estimated_wait_minutes > 0
+                ? `${booth.estimated_wait_minutes}분`
+                : "대기 없음"}
+            </dd>
+          </div>
+        </dl>
+        {error && <p className="form-error">{error}</p>}
+        <section className="booth-queue-card">
+          {myQueue ? (
+            <>
+              <span>MY QUEUE</span>
+              <strong>{myQueue.queue_number}번</strong>
+              <p>
+                {myQueue.status === "called"
+                  ? "지금 호출됐어요! 부스로 와주세요."
+                  : "대기 중이에요. 순서가 되면 알려드릴게요."}
+              </p>
+            </>
+          ) : booth.status === "open" ? (
+            <button
+              className="primary-action"
+              onClick={() => void join()}
+              disabled={joining}
+            >
+              <Users /> {joining ? "접수 중…" : "줄서기"}
+            </button>
+          ) : (
+            <p>지금은 줄서기를 받지 않는 부스예요.</p>
+          )}
+        </section>
+        {inventory.length > 0 && (
+          <section className="booth-stock">
+            <h2>운영 현황</h2>
+            <ul>
+              {inventory.map((item) => (
+                <li
+                  key={item.id}
+                  className={item.quantity <= item.low_stock_at ? "low" : ""}
+                >
+                  <span>{item.name}</span>
+                  <b>{item.quantity > 0 ? `${item.quantity}개 남음` : "품절"}</b>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {announcements.length > 0 && (
+          <section className="booth-announcements">
+            <h2>공지</h2>
+            {announcements.map((item) => (
+              <article key={item.id}>
+                <b>{item.title}</b>
+                <p>{item.body}</p>
+              </article>
+            ))}
+          </section>
+        )}
+        <Link className="secondary-action booth-report-link" to={`/report?booth=${id}`}>
+          <AlertTriangle /> 이 부스 문제 신고하기
+        </Link>
       </main>
     </>
   );
@@ -428,24 +595,6 @@ function RoleRoute({
     return <Navigate to="/" replace />;
   return children;
 }
-function UnavailablePage({
-  eyebrow,
-  title,
-}: {
-  eyebrow: string;
-  title: string;
-}) {
-  return (
-    <>
-      <Header />
-      <main className="listing-page simple-page">
-        <span>{eyebrow}</span>
-        <h1>{title}</h1>
-        <p>이 업무 영역은 축제 데이터와 연결되어 있습니다.</p>
-      </main>
-    </>
-  );
-}
 export function AppRoutes({ home }: { home: ReactNode }) {
   return (
     <Routes>
@@ -458,6 +607,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
       <Route path="/schedule/:programId" element={<ProgramDetailPage />} />
       <Route path="/teams" element={<TeamsPage />} />
       <Route path="/booths" element={<BoothsPage />} />
+      <Route path="/booths/:boothId" element={<BoothDetailPage />} />
       <Route path="/map" element={<MapPage />} />
       <Route
         path="/booth"

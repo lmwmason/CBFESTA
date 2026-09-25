@@ -58,7 +58,7 @@ export function AdminProgramsPage() {
                   {booth.estimated_wait_minutes > 0 ? `${booth.estimated_wait_minutes} MIN` : "NO WAIT"}
                 </code>
                 <em>{booth.status}</em>
-                <Link to={`/booths`}>보기</Link>
+                <Link to={`/booths/${booth.id}`}>보기</Link>
               </article>
             ))}
             {booths.length === 0 && (

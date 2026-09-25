@@ -226,7 +226,7 @@ export default function App() {
               {booths.map((booth) => (
                 <Link
                   className="live-program-card"
-                  to={`/booths`}
+                  to={`/booths/${booth.id}`}
                   key={booth.id}
                 >
                   <div
