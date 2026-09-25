@@ -657,6 +657,7 @@ export type Database = {
           completed_at: string | null;
           id: number;
           joined_at: string;
+          party_leader_id: number | null;
           party_size: number;
           queue_number: number;
           status: string;
@@ -669,6 +670,7 @@ export type Database = {
           completed_at?: string | null;
           id?: never;
           joined_at?: string;
+          party_leader_id?: number | null;
           party_size?: number;
           queue_number: number;
           status?: string;
@@ -681,6 +683,7 @@ export type Database = {
           completed_at?: string | null;
           id?: never;
           joined_at?: string;
+          party_leader_id?: number | null;
           party_size?: number;
           queue_number?: number;
           status?: string;
@@ -906,6 +909,10 @@ export type Database = {
       assign_unassigned_students_to_teams: {
         Args: { target_festival_id: number };
         Returns: { assigned_count: number; unassigned_count: number }[];
+      };
+      lookup_student_by_number: {
+        Args: { target_student_number: string };
+        Returns: { user_id: string; display_name: string }[];
       };
     };
     Enums: {

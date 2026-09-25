@@ -1,20 +1,35 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   ArrowRight,
   CalendarDays,
+  Check,
   ClipboardCheck,
   Megaphone,
   Package,
+  PhoneCall,
   QrCode,
   Store,
   Tags,
   Trophy,
+  UserX,
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Tables } from "./lib/supabase/database.types";
 import { supabase } from "./lib/supabase/client";
+import {
+  getBoothQueue,
+  subscribeToBoothOperations,
+  updateBooth,
+  updatePartyStatus,
+} from "./lib/supabase/services";
 import { useAuth } from "./features/auth/auth-context";
+
+const STATUS_STEPS: { value: Tables<"booths">["status"]; label: string }[] = [
+  { value: "open", label: "운영 중" },
+  { value: "paused", label: "잠시 멈춤" },
+  { value: "closed", label: "운영 종료" },
+];
 
 function Loading() {
   return <div className="workspace-loading">불러오는 중…</div>;
@@ -44,9 +59,23 @@ export function BoothDashboard() {
   const { user } = useAuth();
   const userId = user?.id;
   const [booth, setBooth] = useState<Tables<"booths"> | null>(null);
-  const [queueCount, setQueueCount] = useState(0);
   const [checkinCount, setCheckinCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [entries, setEntries] = useState<Tables<"queue_entries">[]>([]);
+  const [statusBusy, setStatusBusy] = useState(false);
+  const [queueBusyId, setQueueBusyId] = useState<number | null>(null);
+  const [error, setError] = useState("");
+
+  const loadQueue = useCallback(async (boothId: number) => {
+    try {
+      setEntries(await getBoothQueue(boothId));
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "대기열을 불러오지 못했습니다.",
+      );
+    }
+  }, []);
+
   useEffect(() => {
     if (!supabase || !userId) return;
     void (async () => {
@@ -60,25 +89,57 @@ export function BoothDashboard() {
         setLoading(false);
         return;
       }
-      const [{ data: boothData }, { count: queue }, { count: checkins }] =
-        await Promise.all([
-          supabase.from("booths").select("*").eq("id", boothId).single(),
-          supabase
-            .from("queue_entries")
-            .select("*", { count: "exact", head: true })
-            .eq("booth_id", boothId)
-            .in("status", ["waiting", "called"]),
-          supabase
-            .from("checkins")
-            .select("*", { count: "exact", head: true })
-            .eq("booth_id", boothId),
-        ]);
+      const [{ data: boothData }, { count: checkins }] = await Promise.all([
+        supabase.from("booths").select("*").eq("id", boothId).single(),
+        supabase
+          .from("checkins")
+          .select("*", { count: "exact", head: true })
+          .eq("booth_id", boothId),
+      ]);
       setBooth(boothData);
-      setQueueCount(queue ?? 0);
       setCheckinCount(checkins ?? 0);
+      if (boothData) await loadQueue(boothData.id);
       setLoading(false);
     })();
-  }, [userId]);
+  }, [userId, loadQueue]);
+
+  useEffect(() => {
+    if (!booth) return;
+    return subscribeToBoothOperations(booth.id, () => void loadQueue(booth.id));
+  }, [booth, loadQueue]);
+
+  const changeStatus = async (status: Tables<"booths">["status"]) => {
+    if (!booth || status === booth.status) return;
+    setStatusBusy(true);
+    setError("");
+    try {
+      const updated = await updateBooth(booth.id, { status });
+      setBooth(updated);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "운영 상태를 변경하지 못했습니다.",
+      );
+    } finally {
+      setStatusBusy(false);
+    }
+  };
+
+  const act = async (entry: Tables<"queue_entries">, status: Tables<"queue_entries">["status"]) => {
+    if (!booth) return;
+    setQueueBusyId(entry.id);
+    setError("");
+    try {
+      await updatePartyStatus(entry.id, status);
+      await loadQueue(booth.id);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "상태를 변경하지 못했습니다.",
+      );
+    } finally {
+      setQueueBusyId(null);
+    }
+  };
+
   if (loading)
     return (
       <main className="workspace">
@@ -95,6 +156,10 @@ export function BoothDashboard() {
         />
       </main>
     );
+
+  const waiting = entries.filter((entry) => entry.status === "waiting");
+  const called = entries.filter((entry) => entry.status === "called");
+
   return (
     <main className="workspace">
       <header className="workspace-head">
@@ -102,26 +167,94 @@ export function BoothDashboard() {
           <span>BOOTH DESK</span>
           <h1>{booth.name}</h1>
           <p>
-            <i /> {booth.status === "open" ? "운영 중" : booth.status}
+            <i /> 대기 {waiting.length}팀 · 호출 {called.length}팀
           </p>
         </div>
         <Link className="primary-action" to="/booth/check-in">
           <QrCode /> CHECK-IN
         </Link>
       </header>
-      <section className="metric-grid metrics-3">
+      {error && <p className="form-error">{error}</p>}
+      <div className="status-toggle" role="group" aria-label="운영 상태">
+        {STATUS_STEPS.map((step) => (
+          <button
+            key={step.value}
+            type="button"
+            className={booth.status === step.value ? "active" : ""}
+            disabled={statusBusy}
+            onClick={() => void changeStatus(step.value)}
+          >
+            {step.label}
+          </button>
+        ))}
+      </div>
+      <section className="metric-grid metrics-2">
         <Metric label="CHECK-INS" value={checkinCount} note="누적 참여 확인" />
-        <Metric
-          label="LIVE QUEUE"
-          value={queueCount}
-          note="현재 대기 중"
-          accent
-        />
-        <Metric
-          label="STATUS"
-          value={booth.status.toUpperCase()}
-          note="부스 운영 상태"
-        />
+        <Metric label="LIVE QUEUE" value={waiting.length + called.length} note="현재 대기 중" accent />
+      </section>
+      <section className="queue-board">
+        <div className="queue-column">
+          <h2>호출됨 ({called.length})</h2>
+          {called.length === 0 && <p className="queue-empty">호출한 팀이 없어요.</p>}
+          {called.map((entry) => (
+            <article className="queue-row" key={entry.id}>
+              <b>{entry.queue_number}</b>
+              <span>
+                {entry.party_size}명
+                {entry.companion_student_numbers.length > 0 && (
+                  <small>{entry.companion_student_numbers.join(", ")}</small>
+                )}
+              </span>
+              <div>
+                <button
+                  className="primary-action"
+                  disabled={queueBusyId === entry.id}
+                  onClick={() => void act(entry, "served")}
+                >
+                  <Check /> 완료
+                </button>
+                <button
+                  className="secondary-action"
+                  disabled={queueBusyId === entry.id}
+                  onClick={() => void act(entry, "no_show")}
+                >
+                  <UserX /> 노쇼
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
+        <div className="queue-column">
+          <h2>대기 중 ({waiting.length})</h2>
+          {waiting.length === 0 && <p className="queue-empty">대기 중인 팀이 없어요.</p>}
+          {waiting.map((entry) => (
+            <article className="queue-row" key={entry.id}>
+              <b>{entry.queue_number}</b>
+              <span>
+                {entry.party_size}명
+                {entry.companion_student_numbers.length > 0 && (
+                  <small>{entry.companion_student_numbers.join(", ")}</small>
+                )}
+              </span>
+              <div>
+                <button
+                  className="primary-action"
+                  disabled={queueBusyId === entry.id}
+                  onClick={() => void act(entry, "called")}
+                >
+                  <PhoneCall /> 호출
+                </button>
+                <button
+                  className="secondary-action"
+                  disabled={queueBusyId === entry.id}
+                  onClick={() => void act(entry, "cancelled")}
+                >
+                  <UserX /> 취소
+                </button>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
       <section className="workspace-actions">
         <Link className="work-panel operation-link" to="/booth/check-in">
@@ -129,14 +262,6 @@ export function BoothDashboard() {
           <span>
             <b>참여 확인</b>
             <small>QR 코드로 빠르게 체크인</small>
-          </span>
-          <ArrowRight />
-        </Link>
-        <Link className="work-panel operation-link" to="/booth/queue">
-          <Users />
-          <span>
-            <b>대기 관리</b>
-            <small>현재 대기 번호와 상태 관리</small>
           </span>
           <ArrowRight />
         </Link>

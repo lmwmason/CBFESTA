@@ -366,6 +366,14 @@ export async function createQr(input: {
   return data as { code: string };
 }
 
+export async function lookupStudentByNumber(studentNumber: string) {
+  const { data, error } = await requireClient().rpc("lookup_student_by_number", {
+    target_student_number: studentNumber,
+  });
+  if (error) throw error;
+  return data?.[0] ?? null;
+}
+
 export async function joinQueue(boothId: number, companionNumbers: string[] = []) {
   const { data, error } = await requireClient().functions.invoke("operations", {
     body: { action: "join-queue", boothId, companionNumbers },
@@ -408,10 +416,26 @@ export async function getBoothQueue(boothId: number) {
     .from("queue_entries")
     .select("*")
     .eq("booth_id", boothId)
+    .is("party_leader_id", null)
     .in("status", ["waiting", "called"])
     .order("queue_number");
   if (error) throw error;
   return data;
+}
+
+export async function updatePartyStatus(
+  leaderId: number,
+  status: Tables<"queue_entries">["status"],
+) {
+  const values: TablesUpdate<"queue_entries"> = { status };
+  if (status === "called") values.called_at = new Date().toISOString();
+  if (["served", "cancelled", "no_show"].includes(status))
+    values.completed_at = new Date().toISOString();
+  const { error } = await requireClient()
+    .from("queue_entries")
+    .update(values)
+    .or(`id.eq.${leaderId},party_leader_id.eq.${leaderId}`);
+  if (error) throw error;
 }
 
 export async function getMyQueueEntry(boothId: number, userId: string) {

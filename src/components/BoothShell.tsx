@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { LogOut, Package, QrCode, Store, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import type { Tables } from "../lib/supabase/database.types";
 import { supabase } from "../lib/supabase/client";
 import { useAuth } from "../features/auth/auth-context";
 
@@ -14,26 +15,41 @@ const links = [
 
 export function BoothShell({ children }: { children: ReactNode }) {
   const { user, signOut } = useAuth();
-  const [boothName, setBoothName] = useState("");
+  const [booth, setBooth] = useState<Pick<
+    Tables<"booths">,
+    "name" | "logo_url" | "accent_color"
+  > | null>(null);
   useEffect(() => {
     if (!supabase || !user) return;
     void supabase
       .from("booth_members")
-      .select("booths(name)")
+      .select("booths(name, logo_url, accent_color)")
       .eq("user_id", user.id)
       .limit(1)
       .maybeSingle()
       .then(({ data }) => {
-        const name = (data?.booths as { name: string } | null)?.name;
-        if (name) setBoothName(name);
+        const item = data?.booths as Pick<
+          Tables<"booths">,
+          "name" | "logo_url" | "accent_color"
+        > | null;
+        if (item) setBooth(item);
       });
   }, [user]);
   return (
     <div className="booth-shell">
       <header className="booth-shell-head">
-        <div>
-          <small>BOOTH DESK</small>
-          <b>{boothName || "부스 운영"}</b>
+        <div className="booth-shell-identity">
+          {booth?.logo_url ? (
+            <img src={booth.logo_url} alt="" />
+          ) : (
+            <i style={{ backgroundColor: booth?.accent_color ?? "#121212" }}>
+              <Store />
+            </i>
+          )}
+          <div>
+            <small>BOOTH DESK</small>
+            <b>{booth?.name ?? "부스 운영"}</b>
+          </div>
         </div>
         <button onClick={() => void signOut()}>
           <LogOut /> 로그아웃

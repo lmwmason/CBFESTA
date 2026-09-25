@@ -5,7 +5,7 @@ import { supabase } from "../../lib/supabase/client";
 import {
   getBoothQueue,
   subscribeToBoothOperations,
-  updateQueueEntry,
+  updatePartyStatus,
 } from "../../lib/supabase/services";
 import { useAuth } from "../auth/auth-context";
 
@@ -54,7 +54,7 @@ export function BoothQueuePage() {
     setBusyId(entry.id);
     setError("");
     try {
-      await updateQueueEntry(entry.id, status);
+      await updatePartyStatus(entry.id, status);
       if (booth) await load(booth.id);
     } catch (caught) {
       setError(

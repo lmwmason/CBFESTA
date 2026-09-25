@@ -33,6 +33,7 @@ import {
   getMyQueueEntries,
   getMyQueueEntry,
   joinQueue,
+  lookupStudentByNumber,
   subscribeToBoothOperations,
   subscribeToFestival,
   updateQueueEntry,
@@ -88,7 +89,6 @@ function Header() {
         <Link to="/schedule">SCHEDULE</Link>
         <Link to="/teams">TEAMS</Link>
         <Link to="/reservations">MY QUEUE</Link>
-        <Link to="/map">MAP</Link>
         <Link to="/report">REPORT</Link>
       </nav>
       <div className="header-tools">
@@ -590,7 +590,47 @@ function BoothDetailPage() {
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [companions, setCompanions] = useState<string[]>([]);
+  const [companionStatus, setCompanionStatus] = useState<
+    Record<number, { state: "checking" | "ok" | "error"; note: string }>
+  >({});
   const [error, setError] = useState("");
+
+  const checkCompanion = async (index: number, rawValue: string) => {
+    const value = rawValue.trim();
+    if (!value) {
+      setCompanionStatus((prev) => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+      return;
+    }
+    if (value === "9999" || value === "9998") {
+      setCompanionStatus((prev) => ({
+        ...prev,
+        [index]: { state: "error", note: "운영진 전용 학번이에요." },
+      }));
+      return;
+    }
+    setCompanionStatus((prev) => ({
+      ...prev,
+      [index]: { state: "checking", note: "확인 중…" },
+    }));
+    try {
+      const found = await lookupStudentByNumber(value);
+      setCompanionStatus((prev) => ({
+        ...prev,
+        [index]: found
+          ? { state: "ok", note: found.display_name }
+          : { state: "error", note: "등록된 계정이 없어요." },
+      }));
+    } catch {
+      setCompanionStatus((prev) => ({
+        ...prev,
+        [index]: { state: "error", note: "확인하지 못했어요." },
+      }));
+    }
+  };
 
   const refresh = useCallback(async () => {
     try {
@@ -630,17 +670,33 @@ function BoothDetailPage() {
       navigate(`/login?next=${encodeURIComponent(`/booths/${id}`)}`);
       return;
     }
+    const values = companions.map((value) => value.trim()).filter(Boolean);
+    const hasUnresolved = companions.some(
+      (value, index) => value.trim() && companionStatus[index]?.state !== "ok",
+    );
+    if (hasUnresolved) {
+      setError("모든 친구 학번을 먼저 확인해 주세요.");
+      return;
+    }
     setJoining(true);
     setError("");
     try {
-      await joinQueue(
-        id,
-        companions.map((value) => value.trim()).filter(Boolean),
-      );
+      await joinQueue(id, values);
+      setCompanions([]);
+      setCompanionStatus({});
       await refresh();
     } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "";
       setError(
-        caught instanceof Error ? caught.message : "줄서기에 실패했습니다.",
+        message.includes("Unknown student numbers")
+          ? "등록되지 않은 학번이 있어요. 다시 확인해 주세요."
+          : message.includes("Reserved student numbers")
+            ? "운영진 학번(9999, 9998)은 같이 줄서기에 추가할 수 없어요."
+            : message.includes("Cannot add yourself")
+              ? "본인 학번은 추가할 수 없어요."
+              : message.includes("Already in queue")
+                ? "이미 이 부스에 줄서고 있어요."
+                : message || "줄서기에 실패했습니다.",
       );
     } finally {
       setJoining(false);
@@ -711,28 +767,54 @@ function BoothDetailPage() {
               <div className="party-size-field">
                 <span>같이 줄 설 친구 학번</span>
                 {companions.map((value, index) => (
-                  <div className="companion-input" key={index}>
-                    <input
-                      value={value}
-                      maxLength={4}
-                      placeholder="학번 4자리"
-                      onChange={(event) => {
-                        const next = [...companions];
-                        next[index] = event.target.value;
-                        setCompanions(next);
-                      }}
-                    />
-                    <button
-                      type="button"
-                      aria-label="삭제"
-                      onClick={() =>
-                        setCompanions(
-                          companions.filter((_, i) => i !== index),
-                        )
-                      }
-                    >
-                      <X />
-                    </button>
+                  <div className="companion-input-group" key={index}>
+                    <div className="companion-input">
+                      <input
+                        value={value}
+                        maxLength={4}
+                        placeholder="학번 4자리"
+                        onChange={(event) => {
+                          const next = [...companions];
+                          next[index] = event.target.value;
+                          setCompanions(next);
+                          setCompanionStatus((prev) => {
+                            const nextStatus = { ...prev };
+                            delete nextStatus[index];
+                            return nextStatus;
+                          });
+                        }}
+                        onBlur={(event) =>
+                          void checkCompanion(index, event.target.value)
+                        }
+                      />
+                      <button
+                        type="button"
+                        aria-label="삭제"
+                        onClick={() => {
+                          setCompanions(
+                            companions.filter((_, i) => i !== index),
+                          );
+                          setCompanionStatus((prev) => {
+                            const nextStatus: typeof prev = {};
+                            Object.entries(prev).forEach(([key, val]) => {
+                              const k = Number(key);
+                              if (k < index) nextStatus[k] = val;
+                              else if (k > index) nextStatus[k - 1] = val;
+                            });
+                            return nextStatus;
+                          });
+                        }}
+                      >
+                        <X />
+                      </button>
+                    </div>
+                    {companionStatus[index] && (
+                      <small
+                        className={`companion-status-${companionStatus[index].state}`}
+                      >
+                        {companionStatus[index].note}
+                      </small>
+                    )}
                   </div>
                 ))}
                 <button
@@ -794,9 +876,6 @@ function BoothDetailPage() {
     </>
   );
 }
-function MapPage() {
-  return <BoothsPage />;
-}
 function ErrorPage({ message }: { message: string }) {
   return (
     <main className="empty-festival">
@@ -827,21 +906,37 @@ function RoleRoute({
     return <Navigate to="/" replace />;
   return children;
 }
+const STAFF_ROLES: FestivalRole[] = ["owner", "admin", "staff", "booth_operator"];
+
+function StudentRoute({ children }: { children: ReactNode }) {
+  const auth = useAuth();
+  if (auth.loading) return <Loading />;
+  if (
+    auth.user &&
+    auth.activeRoles.some((role) => STAFF_ROLES.includes(role as FestivalRole))
+  ) {
+    const target = auth.activeRoles.includes("booth_operator" as FestivalRole)
+      ? "/booth"
+      : "/admin";
+    return <Navigate to={target} replace />;
+  }
+  return children;
+}
 export function AppRoutes({ home }: { home: ReactNode }) {
   return (
     <Routes>
-      <Route path="/" element={home} />
+      <Route path="/" element={<StudentRoute>{home}</StudentRoute>} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/report" element={<ReportPage />} />
+      <Route path="/report" element={<StudentRoute><ReportPage /></StudentRoute>} />
       <Route path="/programs" element={<Navigate to="/schedule" replace />} />
       <Route path="/programs/:programId" element={<Navigate to="/schedule" replace />} />
-      <Route path="/schedule" element={<SchedulePage />} />
-      <Route path="/schedule/:programId" element={<ProgramDetailPage />} />
-      <Route path="/teams" element={<TeamsPage />} />
-      <Route path="/reservations" element={<ReservationsPage />} />
-      <Route path="/booths" element={<BoothsPage />} />
-      <Route path="/booths/:boothId" element={<BoothDetailPage />} />
-      <Route path="/map" element={<MapPage />} />
+      <Route path="/schedule" element={<StudentRoute><SchedulePage /></StudentRoute>} />
+      <Route path="/schedule/:programId" element={<StudentRoute><ProgramDetailPage /></StudentRoute>} />
+      <Route path="/teams" element={<StudentRoute><TeamsPage /></StudentRoute>} />
+      <Route path="/reservations" element={<StudentRoute><ReservationsPage /></StudentRoute>} />
+      <Route path="/booths" element={<StudentRoute><BoothsPage /></StudentRoute>} />
+      <Route path="/booths/:boothId" element={<StudentRoute><BoothDetailPage /></StudentRoute>} />
+      <Route path="/map" element={<Navigate to="/booths" replace />} />
       <Route
         path="/booth"
         element={
@@ -859,7 +954,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         }
       />
       <Route path="/booth/:boothId/display" element={<BoothDisplayPage />} />
-      <Route path="/check-in" element={<StudentCheckinPage />} />
+      <Route path="/check-in" element={<StudentRoute><StudentCheckinPage /></StudentRoute>} />
       <Route
         path="/booth/queue"
         element={

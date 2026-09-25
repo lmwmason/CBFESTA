@@ -87,8 +87,11 @@ export function AdminTeamsPage() {
         }, {}),
       );
     } catch (caught) {
+      const raw = caught instanceof Error ? caught.message : "";
       setError(
-        caught instanceof Error ? caught.message : "자동 배정에 실패했습니다.",
+        raw.includes("Set a capacity")
+          ? "먼저 '팀당 인원'을 입력하거나, 각 팀 편집 화면에서 정원을 설정한 뒤 다시 시도하세요."
+          : raw || "자동 배정에 실패했습니다.",
       );
     } finally {
       setBalancing(false);
