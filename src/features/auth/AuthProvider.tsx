@@ -127,11 +127,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [signIn],
   );
   const updateAccount = useCallback(
-    async ({ name, password }: { name?: string; password?: string }) => {
+    async ({
+      name,
+      password,
+      avatarUrl,
+    }: {
+      name?: string;
+      password?: string;
+      avatarUrl?: string;
+    }) => {
       if (!supabase) throw new Error("Supabase 설정이 필요합니다.");
       const payload: { password?: string; data?: Record<string, unknown> } = {};
       if (password) payload.password = password;
-      if (name) payload.data = { full_name: name };
+      if (name || avatarUrl) {
+        payload.data = {
+          ...(name ? { full_name: name } : {}),
+          ...(avatarUrl ? { avatar_url: avatarUrl } : {}),
+        };
+      }
       if (!payload.password && !payload.data) return;
       const { error } = await supabase.auth.updateUser(payload);
       if (error) throw error;

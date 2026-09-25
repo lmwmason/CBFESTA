@@ -773,7 +773,7 @@ export function subscribeToBoothOperations(
 }
 
 async function uploadPublicImage(
-  bucket: "team-logos" | "booth-assets",
+  bucket: "team-logos" | "booth-assets" | "avatars",
   path: string,
   file: File,
 ) {
@@ -783,7 +783,7 @@ async function uploadPublicImage(
     )
   )
     throw new Error("PNG, JPG, WEBP, SVG 이미지만 업로드할 수 있습니다.");
-  const limit = bucket === "team-logos" ? 5_242_880 : 10_485_760;
+  const limit = bucket === "booth-assets" ? 10_485_760 : 5_242_880;
   if (file.size > limit)
     throw new Error(`파일은 ${limit / 1_048_576}MB 이하여야 합니다.`);
   const client = requireClient();
@@ -794,6 +794,16 @@ async function uploadPublicImage(
   });
   if (error) throw error;
   return client.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
+export async function uploadAvatar(userId: string, file: File) {
+  const extension = file.name.split(".").pop()?.toLowerCase() || "png";
+  const url = await uploadPublicImage(
+    "avatars",
+    `${userId}/avatar.${extension}`,
+    file,
+  );
+  return `${url}?v=${Date.now()}`;
 }
 
 export function uploadTeamLogo(festivalId: number, teamId: number, file: File) {

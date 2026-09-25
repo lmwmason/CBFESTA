@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { Save } from "lucide-react";
+import { Save, Upload, UserRound } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { Link, Navigate } from "react-router-dom";
+import { uploadAvatar } from "../../lib/supabase/services";
 import { useAuth } from "../auth/auth-context";
 
 export function AccountSettingsPage() {
@@ -14,11 +15,31 @@ export function AccountSettingsPage() {
 function AccountSettingsForm({ user }: { user: User }) {
   const { updateAccount } = useAuth();
   const [name, setName] = useState(user.user_metadata.full_name ?? "");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    user.user_metadata.avatar_url ?? null,
+  );
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+
+  const uploadPhoto = async (file: File) => {
+    setUploading(true);
+    setError("");
+    try {
+      const url = await uploadAvatar(user.id, file);
+      await updateAccount({ avatarUrl: url });
+      setAvatarUrl(url);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "프로필 사진을 업로드하지 못했습니다.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -70,6 +91,31 @@ function AccountSettingsForm({ user }: { user: User }) {
       <form className="editor-form" onSubmit={submit}>
         {error && <p className="form-error">{error}</p>}
         {done && <p className="form-success">저장했습니다.</p>}
+        <label>
+          <span>프로필 사진</span>
+          <div className="avatar-upload">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="" />
+            ) : (
+              <span className="avatar-upload-fallback">
+                <UserRound />
+              </span>
+            )}
+            <label className="secondary-action avatar-upload-button">
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                disabled={uploading}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void uploadPhoto(file);
+                }}
+              />
+              <Upload /> {uploading ? "업로드 중…" : "사진 선택"}
+            </label>
+          </div>
+        </label>
         <label>
           <span>이름</span>
           <input

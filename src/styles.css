@@ -358,6 +358,13 @@ a.metric.accent:hover { background: #000; }
 .ad-card-upload { position: relative; cursor: pointer; }
 .ad-card-upload input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .ad-card-upload svg { width: 15px; }
+.avatar-upload { display: flex; align-items: center; gap: 16px; }
+.avatar-upload img, .avatar-upload-fallback { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
+.avatar-upload-fallback { display: grid; place-items: center; background: #f0eeee; color: var(--secondary); }
+.avatar-upload-fallback svg { width: 26px; }
+.avatar-upload-button { position: relative; cursor: pointer; }
+.avatar-upload-button input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.avatar-upload-button svg { width: 15px; }
 .ad-card-history { list-style: none; margin: 16px 0 0; padding: 12px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .ad-card-history li { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
 .ad-card-history span { padding: 2px 8px; border-radius: 999px; background: #f5f5f4; font-size: 10px; font-weight: 700; }
