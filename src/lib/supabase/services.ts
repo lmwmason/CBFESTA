@@ -390,6 +390,16 @@ export async function updateReport(id: number, values: TablesUpdate<"reports">) 
   return data;
 }
 
+export async function getTeam(id: number) {
+  const { data, error } = await requireClient()
+    .from("teams")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function getAdminTeams(festivalId: number) {
   const { data, error } = await requireClient()
     .from("teams")

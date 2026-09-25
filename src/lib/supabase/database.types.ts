@@ -830,6 +830,7 @@ export type Database = {
           festival_id: number;
           id: number;
           logo_url: string | null;
+          member_capacity: number;
           name: string;
           primary_color: string;
           score: number;
@@ -840,6 +841,7 @@ export type Database = {
           festival_id: number;
           id?: never;
           logo_url?: string | null;
+          member_capacity?: number;
           name: string;
           primary_color?: string;
           score?: number;
@@ -850,6 +852,7 @@ export type Database = {
           festival_id?: number;
           id?: never;
           logo_url?: string | null;
+          member_capacity?: number;
           name?: string;
           primary_color?: string;
           score?: number;

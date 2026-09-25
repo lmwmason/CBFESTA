@@ -8,6 +8,7 @@ import {
   QrCode,
   Store,
   Tags,
+  Trophy,
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -285,6 +286,14 @@ export function AdminDashboard() {
           <span>
             <b>신고 및 이슈</b>
             <small>현장 요청의 처리 상태 관리</small>
+          </span>
+          <ArrowRight />
+        </Link>
+        <Link className="work-panel operation-link" to="/admin/teams">
+          <Trophy />
+          <span>
+            <b>팀 관리</b>
+            <small>팀 생성, 정원 설정과 자동 배정</small>
           </span>
           <ArrowRight />
         </Link>

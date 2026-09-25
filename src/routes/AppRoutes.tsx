@@ -51,6 +51,11 @@ import { BoothSettingsPage } from "../features/booth/BoothSettingsPage";
 import { BoothQueuePage } from "../features/booth/BoothQueuePage";
 import { BoothInventoryPage } from "../features/booth/BoothInventoryPage";
 import { AdminIssuesPage } from "../features/admin/AdminIssuesPage";
+import {
+  AdminTeamsPage,
+  EditTeamPage,
+  NewTeamPage,
+} from "../features/admin/AdminTeamsPage";
 import { ReportForm } from "../features/reports/ReportSheet";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
@@ -711,6 +716,30 @@ export function AppRoutes({ home }: { home: ReactNode }) {
       <Route path="/admin/schedule/new" element={<RoleRoute allow={["owner", "admin", "staff"]}><NewSchedulePage /></RoleRoute>} />
       <Route path="/admin/programs" element={<Navigate to="/admin/booths" replace />} />
       <Route path="/admin/programs/new" element={<Navigate to="/admin/booths/new" replace />} />
+      <Route
+        path="/admin/teams"
+        element={
+          <RoleRoute allow={["owner", "admin"]}>
+            <AdminTeamsPage />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/teams/new"
+        element={
+          <RoleRoute allow={["owner", "admin"]}>
+            <NewTeamPage />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/teams/:teamId"
+        element={
+          <RoleRoute allow={["owner", "admin"]}>
+            <EditTeamPage />
+          </RoleRoute>
+        }
+      />
       <Route
         path="/admin/issues"
         element={
