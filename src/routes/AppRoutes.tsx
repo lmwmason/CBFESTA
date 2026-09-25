@@ -27,6 +27,10 @@ import {
   NewCategoryPage,
 } from "../features/admin/AdminCategoriesPage";
 import { AdminPermissionsPage } from "../features/admin/AdminPermissionsPage";
+import {
+  AdminProgramsPage,
+  NewProgramPage,
+} from "../features/admin/AdminProgramsPage";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -449,7 +453,15 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/programs"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
-            <UnavailablePage eyebrow="CONTENT" title="프로그램 관리" />
+            <AdminProgramsPage />
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/programs/new"
+        element={
+          <RoleRoute allow={["owner", "admin", "staff"]}>
+            <NewProgramPage />
           </RoleRoute>
         }
       />

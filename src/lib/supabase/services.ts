@@ -78,6 +78,26 @@ export async function getAdminCategories(festivalId: number) {
   return data;
 }
 
+export async function getAdminPrograms(festivalId: number) {
+  const { data, error } = await requireClient()
+    .from("programs")
+    .select("*")
+    .eq("festival_id", festivalId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function createProgram(values: TablesInsert<"programs">) {
+  const { data, error } = await requireClient()
+    .from("programs")
+    .insert(values)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
 export async function updateCategory(
   id: number,
   values: TablesUpdate<"categories">,
