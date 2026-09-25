@@ -42,6 +42,7 @@ import {
 import { BoothSettingsPage } from "../features/booth/BoothSettingsPage";
 import { BoothQueuePage } from "../features/booth/BoothQueuePage";
 import { BoothInventoryPage } from "../features/booth/BoothInventoryPage";
+import { AdminIssuesPage } from "../features/admin/AdminIssuesPage";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -512,7 +513,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/admin/issues"
         element={
           <RoleRoute allow={["owner", "admin", "staff"]}>
-            <UnavailablePage eyebrow="OPERATIONS" title="신고 및 이슈" />
+            <AdminIssuesPage />
           </RoleRoute>
         }
       />

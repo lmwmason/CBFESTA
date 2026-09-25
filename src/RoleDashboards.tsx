@@ -185,6 +185,7 @@ export function AdminDashboard() {
   const [counts, setCounts] = useState({
     booths: 0,
     categories: 0,
+    teams: 0,
     reports: 0,
   });
   const [loading, setLoading] = useState(true);
@@ -201,14 +202,19 @@ export function AdminDashboard() {
         .select("*", { count: "exact", head: true })
         .eq("festival_id", festivalId),
       supabase
+        .from("teams")
+        .select("*", { count: "exact", head: true })
+        .eq("festival_id", festivalId),
+      supabase
         .from("reports")
         .select("*", { count: "exact", head: true })
         .eq("festival_id", festivalId)
         .in("status", ["open", "acknowledged"]),
-    ]).then(([booths, categories, reports]) => {
+    ]).then(([booths, categories, teams, reports]) => {
       setCounts({
         booths: booths.count ?? 0,
         categories: categories.count ?? 0,
+        teams: teams.count ?? 0,
         reports: reports.count ?? 0,
       });
       setLoading(false);
@@ -237,22 +243,17 @@ export function AdminDashboard() {
       </header>
       <section className="metric-grid">
         <Metric label="BOOTHS" value={counts.booths} note="등록된 부스" />
-        <Metric
-          label="BOOTHS"
-          value={counts.booths}
-          note="등록된 부스"
-        />
+        <Metric label="TEAMS" value={counts.teams} note="등록된 팀" />
         <Metric
           label="CATEGORIES"
           value={counts.categories}
           note="콘텐츠 분류"
         />
-        <Metric
-          label="OPEN REPORTS"
-          value={counts.reports}
-          note="처리할 신고"
-          accent
-        />
+        <Link className="metric accent" to="/admin/issues">
+          <span>OPEN REPORTS</span>
+          <strong>{counts.reports}</strong>
+          <p>처리할 신고</p>
+        </Link>
       </section>
       <section className="workspace-actions">
         <Link className="work-panel operation-link" to="/admin/categories">
