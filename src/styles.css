@@ -609,16 +609,23 @@ a.metric.accent:hover { background: #000; }
 }
 
 /* Site footer */
-.site-footer { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 44px clamp(16px, 4vw, 64px); border-top: 1px solid var(--line); background: #fafaf9; text-align: center; }
+.site-footer { display: flex; justify-content: center; padding: 44px clamp(16px, 4vw, 64px); border-top: 1px solid var(--line); background: #fafaf9; }
+.site-footer-inner { display: flex; align-items: center; gap: 48px; }
 .site-footer-credit { display: flex; align-items: center; gap: 14px; }
-.site-footer-credit img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.site-footer-credit img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
 .site-footer-credit span { display: grid; gap: 4px; }
 .site-footer-credit b { font-size: 14px; }
 .site-footer-credit small { font-size: 12px; color: var(--muted); }
-.site-footer-links { display: flex; gap: 22px; }
-.site-footer-links a { font-size: 12px; font-weight: 600; color: var(--secondary); }
+.site-footer-links { display: flex; flex-direction: column; gap: 10px; padding-left: 48px; border-left: 1px solid var(--line); }
+.site-footer-links a { display: flex; align-items: center; gap: 9px; font-size: 12px; font-weight: 600; color: var(--secondary); }
 .site-footer-links a:hover { color: var(--strong); }
-@media (max-width: 767px) { .site-footer { padding: 32px 20px 100px; } }
+.site-footer-link-icon { width: 15px; height: 15px; flex: 0 0 auto; }
+@media (max-width: 767px) {
+  .site-footer { padding: 32px 20px 100px; }
+  .site-footer-inner { flex-direction: column; gap: 24px; text-align: center; }
+  .site-footer-credit { flex-direction: column; }
+  .site-footer-links { padding-left: 0; border-left: 0; align-items: center; padding-top: 20px; border-top: 1px solid var(--line); }
+}
 
 /* Reservations */
 .reservation-list { display: grid; gap: 10px; }
