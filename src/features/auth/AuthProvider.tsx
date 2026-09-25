@@ -30,7 +30,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setMemberships([]);
       return;
     }
-    await supabase.rpc("ensure_participant_membership");
     await supabase.from("profiles").upsert(
       {
         id: user.id,
