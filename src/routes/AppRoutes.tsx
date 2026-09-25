@@ -6,11 +6,11 @@ import {
   CalendarDays,
   ChevronRight,
   MapPin,
-  Minus,
   Plus,
   Search,
   Store,
   Users,
+  X,
 } from "lucide-react";
 import {
   Link,
@@ -25,13 +25,16 @@ import {
 import brandLogo from "../assets/cbfesta-logo.png";
 import type { Tables } from "../lib/supabase/database.types";
 import {
+  estimateWaitMinutes,
   getBoothDetail,
   getCurrentFestival,
   getFestivalCatalog,
+  getMyQueueEntries,
   getMyQueueEntry,
   joinQueue,
   subscribeToBoothOperations,
   subscribeToFestival,
+  updateQueueEntry,
 } from "../lib/supabase/services";
 import { AdminDashboard, BoothDashboard } from "../RoleDashboards";
 import { AuthSheet } from "../features/auth/AuthSheet";
@@ -390,6 +393,134 @@ function TeamsPage() {
     </>
   );
 }
+type ReservationEntry = Tables<"queue_entries"> & {
+  booths: Pick<
+    Tables<"booths">,
+    "id" | "name" | "location" | "accent_color" | "logo_url"
+  > | null;
+};
+function ReservationsPage() {
+  const { user } = useAuth();
+  const [items, setItems] = useState<ReservationEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<number | null>(null);
+  const [error, setError] = useState("");
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    try {
+      setItems((await getMyQueueEntries(user.id)) as ReservationEntry[]);
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "예약을 불러오지 못했습니다.",
+      );
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    void getMyQueueEntries(user.id)
+      .then((data) => setItems(data as ReservationEntry[]))
+      .catch((caught) =>
+        setError(
+          caught instanceof Error ? caught.message : "예약을 불러오지 못했습니다.",
+        ),
+      )
+      .finally(() => setLoading(false));
+  }, [user]);
+
+  const cancel = async (entry: ReservationEntry) => {
+    setBusyId(entry.id);
+    setError("");
+    try {
+      await updateQueueEntry(entry.id, "cancelled");
+      await load();
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "취소하지 못했습니다.",
+      );
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (!user)
+    return (
+      <>
+        <Header />
+        <main className="listing-page simple-page">
+          <Users />
+          <h1>로그인이 필요해요.</h1>
+          <Link
+            className="primary-action"
+            to={`/login?next=${encodeURIComponent("/reservations")}`}
+          >
+            로그인하기
+          </Link>
+        </main>
+      </>
+    );
+
+  return (
+    <>
+      <Header />
+      <main className="listing-page">
+        <PageBack />
+        <header>
+          <span>MY QUEUE</span>
+          <h1>내 예약</h1>
+          <p>지금 줄서고 있는 부스 목록이에요.</p>
+        </header>
+        {error && <p className="form-error">{error}</p>}
+        {loading ? (
+          <div className="management-loading">
+            <LoaderCircle /> 불러오는 중…
+          </div>
+        ) : items.length === 0 ? (
+          <div className="catalog-empty">
+            <Users />
+            <h3>지금 줄서고 있는 부스가 없어요.</h3>
+          </div>
+        ) : (
+          <section className="reservation-list">
+            {items.map((entry) => (
+              <article className="reservation-card" key={entry.id}>
+                <i style={{ backgroundColor: entry.booths?.accent_color ?? "#ccc" }}>
+                  {entry.booths?.logo_url ? (
+                    <img src={entry.booths.logo_url} alt="" />
+                  ) : (
+                    entry.booths?.name?.slice(0, 1)
+                  )}
+                </i>
+                <span>
+                  <b>{entry.booths?.name ?? "부스"}</b>
+                  <small>{entry.booths?.location ?? "위치 준비 중"}</small>
+                  {entry.companion_student_numbers.length > 0 && (
+                    <small>같이: {entry.companion_student_numbers.join(", ")}</small>
+                  )}
+                </span>
+                <strong>{entry.queue_number}번</strong>
+                <em className={entry.status}>
+                  {entry.status === "called" ? "호출됨" : "대기 중"}
+                </em>
+                <button
+                  disabled={busyId === entry.id}
+                  onClick={() => void cancel(entry)}
+                  aria-label="예약 취소"
+                >
+                  <X />
+                </button>
+              </article>
+            ))}
+          </section>
+        )}
+      </main>
+    </>
+  );
+}
 function BoothsPage() {
   const { festival, catalog, loading, error } = usePublicCatalog();
   if (loading) return <Loading />;
@@ -419,9 +550,13 @@ function BoothsPage() {
             const CategoryIcon = getCategoryIcon(category?.code);
             return (
               <Link to={`/booths/${booth.id}`} key={booth.id}>
-                <i style={{ backgroundColor: booth.accent_color }}>
-                  <CategoryIcon />
-                </i>
+                {booth.logo_url ? (
+                  <img src={booth.logo_url} alt="" />
+                ) : (
+                  <i style={{ backgroundColor: booth.accent_color }}>
+                    <CategoryIcon />
+                  </i>
+                )}
                 <span>
                   <b>{booth.name}</b>
                   <small>{booth.location ?? "위치 준비 중"}</small>
@@ -455,7 +590,7 @@ function BoothDetailPage() {
   );
   const [loading, setLoading] = useState(true);
   const [joining, setJoining] = useState(false);
-  const [partySize, setPartySize] = useState(1);
+  const [companions, setCompanions] = useState<string[]>([]);
   const [error, setError] = useState("");
 
   const refresh = useCallback(async () => {
@@ -499,7 +634,10 @@ function BoothDetailPage() {
     setJoining(true);
     setError("");
     try {
-      await joinQueue(id, partySize);
+      await joinQueue(
+        id,
+        companions.map((value) => value.trim()).filter(Boolean),
+      );
       await refresh();
     } catch (caught) {
       setError(
@@ -521,7 +659,8 @@ function BoothDetailPage() {
         </main>
       </>
     );
-  const { booth, inventory, announcements } = detail;
+  const { booth, inventory, announcements, waitingCount } = detail;
+  const waitMinutes = estimateWaitMinutes(booth, waitingCount);
   return (
     <>
       <Header />
@@ -549,11 +688,7 @@ function BoothDetailPage() {
           </div>
           <div>
             <dt>예상 대기</dt>
-            <dd>
-              {booth.estimated_wait_minutes > 0
-                ? `${booth.estimated_wait_minutes}분`
-                : "대기 없음"}
-            </dd>
+            <dd>{waitMinutes > 0 ? `${waitMinutes}분` : "대기 없음"}</dd>
           </div>
         </dl>
         {error && <p className="form-error">{error}</p>}
@@ -568,29 +703,52 @@ function BoothDetailPage() {
                   ? "지금 호출됐어요! 부스로 와주세요."
                   : "대기 중이에요. 순서가 되면 알려드릴게요."}
               </p>
+              {myQueue.companion_student_numbers.length > 0 && (
+                <p>같이: {myQueue.companion_student_numbers.join(", ")}</p>
+              )}
             </>
           ) : booth.status === "open" && booth.queue_enabled ? (
             <>
-              <label className="party-size-field">
-                <span>같이 줄 설 인원</span>
-                <span className="party-size-stepper">
-                  <button
-                    type="button"
-                    onClick={() => setPartySize((n) => Math.max(1, n - 1))}
-                    disabled={partySize <= 1}
-                  >
-                    <Minus />
-                  </button>
-                  <b>{partySize}명</b>
-                  <button
-                    type="button"
-                    onClick={() => setPartySize((n) => Math.min(20, n + 1))}
-                    disabled={partySize >= 20}
-                  >
-                    <Plus />
-                  </button>
-                </span>
-              </label>
+              <div className="party-size-field">
+                <span>같이 줄 설 친구 학번</span>
+                {companions.map((value, index) => (
+                  <div className="companion-input" key={index}>
+                    <input
+                      value={value}
+                      maxLength={4}
+                      placeholder="학번 4자리"
+                      onChange={(event) => {
+                        const next = [...companions];
+                        next[index] = event.target.value;
+                        setCompanions(next);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      aria-label="삭제"
+                      onClick={() =>
+                        setCompanions(
+                          companions.filter((_, i) => i !== index),
+                        )
+                      }
+                    >
+                      <X />
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="companion-add"
+                  disabled={companions.length >= 19}
+                  onClick={() => setCompanions([...companions, ""])}
+                >
+                  <Plus /> 친구 추가
+                </button>
+                <small>
+                  나까지 총{" "}
+                  {companions.filter((value) => value.trim()).length + 1}명
+                </small>
+              </div>
               <button
                 className="primary-action"
                 onClick={() => void join()}
@@ -681,6 +839,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
       <Route path="/schedule" element={<SchedulePage />} />
       <Route path="/schedule/:programId" element={<ProgramDetailPage />} />
       <Route path="/teams" element={<TeamsPage />} />
+      <Route path="/reservations" element={<ReservationsPage />} />
       <Route path="/booths" element={<BoothsPage />} />
       <Route path="/booths/:boothId" element={<BoothDetailPage />} />
       <Route path="/map" element={<MapPage />} />

@@ -20,8 +20,9 @@ export function BoothSettingsPage() {
     location: "",
     accent_color: "#f52a9a",
     status: "draft",
-    estimated_wait_minutes: 0,
     queue_enabled: true,
+    session_minutes: 5,
+    concurrent_capacity: 1,
   });
 
   useEffect(() => {
@@ -46,8 +47,9 @@ export function BoothSettingsPage() {
           location: item.location ?? "",
           accent_color: item.accent_color,
           status: item.status,
-          estimated_wait_minutes: item.estimated_wait_minutes,
           queue_enabled: item.queue_enabled,
+          session_minutes: item.session_minutes,
+          concurrent_capacity: item.concurrent_capacity,
         });
       });
   }, [user]);
@@ -195,19 +197,37 @@ export function BoothSettingsPage() {
           </select>
         </label>
         <label>
-          <span>예상 대기 시간 (분)</span>
+          <span>1회당 소요 시간 (분)</span>
           <input
             type="number"
-            min="0"
-            max="600"
-            value={form.estimated_wait_minutes}
+            min="1"
+            max="240"
+            value={form.session_minutes}
+            onChange={(e) =>
+              setForm({ ...form, session_minutes: Number(e.target.value) })
+            }
+          />
+          <small>한 팀(또는 한 명)을 처리하는 데 걸리는 시간이에요.</small>
+        </label>
+        <label>
+          <span>동시 진행 가능 인원 (팀)</span>
+          <input
+            type="number"
+            min="1"
+            max="50"
+            value={form.concurrent_capacity}
             onChange={(e) =>
               setForm({
                 ...form,
-                estimated_wait_minutes: Number(e.target.value),
+                concurrent_capacity: Number(e.target.value),
               })
             }
           />
+          <small>
+            인생네컷처럼 여럿이 같이 하는 부스는 팀 단위로, 동시에 여러 팀을
+            받을 수 있으면 그 수만큼 입력하세요. 예상 대기 시간은 현재 줄
+            길이로 자동 계산돼요.
+          </small>
         </label>
         <label>
           <span>줄서기 받기</span>

@@ -55,7 +55,7 @@ export function AdminProgramsPage() {
                   <small>{booth.location ?? "LOCATION PENDING"}</small>
                 </span>
                 <code>
-                  {booth.estimated_wait_minutes > 0 ? `${booth.estimated_wait_minutes} MIN` : "NO WAIT"}
+                  회당 {booth.session_minutes}분 · 동시 {booth.concurrent_capacity}팀
                 </code>
                 <em>{booth.status}</em>
                 <Link to={`/booths/${booth.id}`}>보기</Link>

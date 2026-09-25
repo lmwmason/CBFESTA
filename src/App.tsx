@@ -259,16 +259,36 @@ export default function App() {
                       })()}
                     <b>{booth.status.toUpperCase()}</b>
                   </div>
-                  <small>
-                    {catalog?.categories?.find(
-                      (category) => category.id === booth.category_id,
-                    )?.name ?? "FESTIVAL BOOTH"}
-                  </small>
-                  <h3>{booth.name}</h3>
-                  <p>
-                    {booth.short_description ?? booth.location ?? "부스 안내 보기"}
-                    <ArrowRight />
-                  </p>
+                  <div className="live-program-card-info">
+                    {booth.logo_url ? (
+                      <img
+                        className="booth-card-logo"
+                        src={booth.logo_url}
+                        alt=""
+                      />
+                    ) : (
+                      <i
+                        className="booth-card-logo booth-card-logo-fallback"
+                        style={{ backgroundColor: booth.accent_color }}
+                      >
+                        {booth.name.slice(0, 1)}
+                      </i>
+                    )}
+                    <span>
+                      <small>
+                        {catalog?.categories?.find(
+                          (category) => category.id === booth.category_id,
+                        )?.name ?? "FESTIVAL BOOTH"}
+                      </small>
+                      <h3>{booth.name}</h3>
+                      <p>
+                        {booth.short_description ??
+                          booth.location ??
+                          "부스 안내 보기"}
+                        <ArrowRight />
+                      </p>
+                    </span>
+                  </div>
                 </Link>
               ))}
             </div>

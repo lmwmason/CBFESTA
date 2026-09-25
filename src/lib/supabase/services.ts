@@ -82,7 +82,7 @@ export async function getAnnouncements(festivalId: number) {
 
 export async function getBoothDetail(boothId: number) {
   const client = requireClient();
-  const [booth, inventory, announcements] = await Promise.all([
+  const [booth, inventory, announcements, waiting] = await Promise.all([
     client.from("booths").select("*").eq("id", boothId).single(),
     client
       .from("inventory_items")
@@ -96,14 +96,30 @@ export async function getBoothDetail(boothId: number) {
       .eq("booth_id", boothId)
       .eq("is_published", true)
       .order("published_at", { ascending: false }),
+    client
+      .from("queue_entries")
+      .select("*", { count: "exact", head: true })
+      .eq("booth_id", boothId)
+      .in("status", ["waiting", "called"]),
   ]);
-  const error = booth.error ?? inventory.error ?? announcements.error;
+  const error = booth.error ?? inventory.error ?? announcements.error ?? waiting.error;
   if (error) throw error;
   return {
     booth: booth.data,
     inventory: inventory.data ?? [],
     announcements: announcements.data ?? [],
+    waitingCount: waiting.count ?? 0,
   };
+}
+
+export function estimateWaitMinutes(
+  booth: Pick<Tables<"booths">, "session_minutes" | "concurrent_capacity">,
+  waitingCount: number,
+) {
+  if (waitingCount <= 0) return 0;
+  return (
+    Math.ceil(waitingCount / booth.concurrent_capacity) * booth.session_minutes
+  );
 }
 
 export async function getFestivalById(id: number) {
@@ -350,12 +366,23 @@ export async function createQr(input: {
   return data as { code: string };
 }
 
-export async function joinQueue(boothId: number, partySize = 1) {
+export async function joinQueue(boothId: number, companionNumbers: string[] = []) {
   const { data, error } = await requireClient().functions.invoke("operations", {
-    body: { action: "join-queue", boothId, partySize },
+    body: { action: "join-queue", boothId, companionNumbers },
   });
   if (error) throw error;
   return data as Tables<"queue_entries">;
+}
+
+export async function getMyQueueEntries(userId: string) {
+  const { data, error } = await requireClient()
+    .from("queue_entries")
+    .select("*, booths(name, location, accent_color, logo_url)")
+    .eq("user_id", userId)
+    .in("status", ["waiting", "called"])
+    .order("joined_at", { ascending: false });
+  if (error) throw error;
+  return data;
 }
 
 export async function updateQueueEntry(

@@ -104,7 +104,12 @@ export function BoothQueuePage() {
           {called.map((entry) => (
             <article className="queue-row" key={entry.id}>
               <b>{entry.queue_number}</b>
-              <span>{entry.party_size}명</span>
+              <span>
+                {entry.party_size}명
+                {entry.companion_student_numbers.length > 0 && (
+                  <small>{entry.companion_student_numbers.join(", ")}</small>
+                )}
+              </span>
               <div>
                 <button
                   className="primary-action"
@@ -132,7 +137,12 @@ export function BoothQueuePage() {
           {waiting.map((entry) => (
             <article className="queue-row" key={entry.id}>
               <b>{entry.queue_number}</b>
-              <span>{entry.party_size}명</span>
+              <span>
+                {entry.party_size}명
+                {entry.companion_student_numbers.length > 0 && (
+                  <small>{entry.companion_student_numbers.join(", ")}</small>
+                )}
+              </span>
               <div>
                 <button
                   className="primary-action"

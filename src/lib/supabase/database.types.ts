@@ -104,6 +104,7 @@ export type Database = {
         Row: {
           accent_color: string;
           category_id: number | null;
+          concurrent_capacity: number;
           content_blocks: Json;
           cover_url: string | null;
           created_at: string;
@@ -118,6 +119,7 @@ export type Database = {
           operating_hours: Json;
           queue_enabled: boolean;
           queue_size: number;
+          session_minutes: number;
           settings: Json;
           short_description: string | null;
           status: string;
@@ -126,6 +128,7 @@ export type Database = {
         Insert: {
           accent_color?: string;
           category_id?: number | null;
+          concurrent_capacity?: number;
           content_blocks?: Json;
           cover_url?: string | null;
           created_at?: string;
@@ -140,6 +143,7 @@ export type Database = {
           operating_hours?: Json;
           queue_enabled?: boolean;
           queue_size?: number;
+          session_minutes?: number;
           settings?: Json;
           short_description?: string | null;
           status?: string;
@@ -148,6 +152,7 @@ export type Database = {
         Update: {
           accent_color?: string;
           category_id?: number | null;
+          concurrent_capacity?: number;
           content_blocks?: Json;
           cover_url?: string | null;
           created_at?: string;
@@ -162,6 +167,7 @@ export type Database = {
           operating_hours?: Json;
           queue_enabled?: boolean;
           queue_size?: number;
+          session_minutes?: number;
           settings?: Json;
           short_description?: string | null;
           status?: string;
@@ -647,6 +653,7 @@ export type Database = {
         Row: {
           booth_id: number;
           called_at: string | null;
+          companion_student_numbers: string[];
           completed_at: string | null;
           id: number;
           joined_at: string;
@@ -658,6 +665,7 @@ export type Database = {
         Insert: {
           booth_id: number;
           called_at?: string | null;
+          companion_student_numbers?: string[];
           completed_at?: string | null;
           id?: never;
           joined_at?: string;
@@ -669,6 +677,7 @@ export type Database = {
         Update: {
           booth_id?: number;
           called_at?: string | null;
+          companion_student_numbers?: string[];
           completed_at?: string | null;
           id?: never;
           joined_at?: string;

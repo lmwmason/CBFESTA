@@ -23,12 +23,17 @@ Deno.serve(async (request) => {
 
     if (payload.action === 'join-queue') {
       const boothId = Number(payload.boothId);
-      const partySize = Number(payload.partySize ?? 1);
-      if (!Number.isSafeInteger(boothId) || !Number.isSafeInteger(partySize)) return json({ error: 'Invalid queue request' }, 400);
+      const companionNumbers = Array.isArray(payload.companionNumbers)
+        ? payload.companionNumbers
+            .filter((value: unknown) => typeof value === 'string' && value.trim().length > 0)
+            .map((value: string) => value.trim())
+            .slice(0, 19)
+        : [];
+      if (!Number.isSafeInteger(boothId)) return json({ error: 'Invalid queue request' }, 400);
       const { data, error } = await admin.rpc('join_queue_for_actor', {
         actor: user.id,
         target_booth_id: boothId,
-        requested_party_size: partySize,
+        companion_numbers: companionNumbers,
       });
       if (error) return json({ error: error.message }, error.message.includes('Already') ? 409 : 400);
       return json(data);
