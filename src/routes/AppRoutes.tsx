@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
+  ArrowRight,
   CalendarDays,
   ChevronRight,
   MapPin,
@@ -14,6 +15,7 @@ import {
   useLocation,
   useNavigate,
   useParams,
+  useSearchParams,
 } from "react-router-dom";
 import brandLogo from "../assets/cbfesta-logo.png";
 import type { Tables } from "../lib/supabase/database.types";
@@ -43,6 +45,7 @@ import { BoothSettingsPage } from "../features/booth/BoothSettingsPage";
 import { BoothQueuePage } from "../features/booth/BoothQueuePage";
 import { BoothInventoryPage } from "../features/booth/BoothInventoryPage";
 import { AdminIssuesPage } from "../features/admin/AdminIssuesPage";
+import { ReportForm } from "../features/reports/ReportSheet";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -61,6 +64,7 @@ function Header() {
         <Link to="/schedule">SCHEDULE</Link>
         <Link to="/teams">TEAMS</Link>
         <Link to="/map">MAP</Link>
+        <Link to="/report">REPORT</Link>
         <Link to="/login">ACCOUNT</Link>
       </nav>
     </header>
@@ -121,6 +125,13 @@ function EmptyFestival() {
   );
 }
 function LoginPage() {
+  const { user } = useAuth();
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+  const next = params.get("next");
+  useEffect(() => {
+    if (user && next) navigate(next, { replace: true });
+  }, [user, next, navigate]);
   return (
     <main className="auth-page">
       <Link className="page-back" to="/">
@@ -140,6 +151,46 @@ function LoginPage() {
         </p>
       </section>
       <AuthSheet />
+    </main>
+  );
+}
+function ReportPage() {
+  const { user } = useAuth();
+  const [params] = useSearchParams();
+  const boothId = params.get("booth");
+  const next = `/report${boothId ? `?booth=${boothId}` : ""}`;
+  return (
+    <main className="auth-page">
+      <Link className="page-back" to="/">
+        <ArrowLeft /> 축제로 돌아가기
+      </Link>
+      <section className="auth-page-intro">
+        <img src={brandLogo} alt="" />
+        <span>SAFETY &amp; ISSUES</span>
+        <h1>
+          현장의 문제를
+          <br />
+          바로 알려주세요.
+        </h1>
+        <p>안전, 시설, 질서 문제를 신고하면 운영진에게 즉시 전달됩니다.</p>
+      </section>
+      <section className="auth-sheet">
+        {user ? (
+          <ReportForm boothId={boothId ? Number(boothId) : undefined} />
+        ) : (
+          <>
+            <span>SIGN IN REQUIRED</span>
+            <h2>로그인이 필요해요</h2>
+            <p>신고는 본인 계정으로만 접수할 수 있어요.</p>
+            <Link
+              className="primary-action"
+              to={`/login?next=${encodeURIComponent(next)}`}
+            >
+              로그인하기 <ArrowRight />
+            </Link>
+          </>
+        )}
+      </section>
     </main>
   );
 }
@@ -400,6 +451,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
     <Routes>
       <Route path="/" element={home} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/report" element={<ReportPage />} />
       <Route path="/programs" element={<Navigate to="/schedule" replace />} />
       <Route path="/programs/:programId" element={<Navigate to="/schedule" replace />} />
       <Route path="/schedule" element={<SchedulePage />} />

@@ -137,6 +137,7 @@ export default function App() {
           <Link to="/schedule">SCHEDULE</Link>
           <Link to="/teams">TEAMS</Link>
           <Link to="/map">MAP</Link>
+          <Link to="/report">REPORT</Link>
         </nav>
         <div className="header-tools">
           <Link
