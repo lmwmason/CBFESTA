@@ -17,6 +17,18 @@ export async function getPublicFestival(slug: string) {
   return data;
 }
 
+export async function getCurrentFestival() {
+  const { data, error } = await requireClient()
+    .from("festivals")
+    .select("*")
+    .eq("is_public", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 export async function getFestivalCatalog(festivalId: number) {
   const client = requireClient();
   const [categories, programs, booths, teams] = await Promise.all([
@@ -205,15 +217,6 @@ export async function createReport(values: TablesInsert<"reports">) {
   return data;
 }
 
-export async function setupFestival(name: string, slug: string) {
-  const { data, error } = await requireClient().functions.invoke(
-    "setup-festival",
-    { body: { name, slug } },
-  );
-  if (error) throw error;
-  return data as { festivalId: number };
-}
-
 export function subscribeToFestival(festivalId: number, onChange: () => void) {
   const client = requireClient();
   const channel = client
@@ -269,13 +272,11 @@ async function uploadPublicImage(
   if (file.size > limit)
     throw new Error(`파일은 ${limit / 1_048_576}MB 이하여야 합니다.`);
   const client = requireClient();
-  const { error } = await client.storage
-    .from(bucket)
-    .upload(path, file, {
-      upsert: true,
-      contentType: file.type,
-      cacheControl: "3600",
-    });
+  const { error } = await client.storage.from(bucket).upload(path, file, {
+    upsert: true,
+    contentType: file.type,
+    cacheControl: "3600",
+  });
   if (error) throw error;
   return client.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }

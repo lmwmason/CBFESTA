@@ -1,630 +1,283 @@
-import { lazy, Suspense, useEffect, useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import {
-  AlertTriangle,
-  Bell,
-  ChevronLeft,
-  ChevronRight,
-  Clock3,
-  Heart,
-  Home,
-  ImageUp,
+  ArrowRight,
+  CalendarDays,
   LogIn,
-  Map,
-  MapPin,
-  Megaphone,
-  Package,
-  Pencil,
-  QrCode,
   Search,
   ShieldCheck,
-  Store,
-  UserRound,
-  Users,
-  X,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
-import demoTeamLogo from "./assets/team-logo-demo.png";
+import type { Tables } from "./lib/supabase/database.types";
+import {
+  getCurrentFestival,
+  getFestivalCatalog,
+} from "./lib/supabase/services";
 import { useAuth } from "./features/auth/auth-context";
-import { FestivalOnboarding } from "./features/onboarding/FestivalOnboarding";
 
-const TeamArtifact = lazy(() => import("./TeamArtifact"));
-const programs = [
-  {
-    id: 1,
-    category: "MISSION",
-    title: "분식부스의 비밀 메뉴",
-    place: "운동장 A-04",
-    time: "지금 참여 가능",
-    score: 150,
-    face: "🥤",
-    tone: "orange",
-    word: "TASTE",
-  },
-  {
-    id: 2,
-    category: "PHOTO",
-    title: "청룡 포토존 팀 인증",
-    place: "본관 중앙",
-    time: "18:00까지",
-    score: 240,
-    face: "📸",
-    tone: "blue",
-    word: "POSE",
-  },
-  {
-    id: 3,
-    category: "LIVE",
-    title: "밴드부 앙코르 암호",
-    place: "대강당",
-    time: "17:20 시작",
-    score: 320,
-    face: "🎸",
-    tone: "lime",
-    word: "LOUD",
-  },
-  {
-    id: 4,
-    category: "SECRET",
-    title: "방송실에서 온 전파",
-    place: "위치 비공개",
-    time: "단 40분",
-    score: 500,
-    face: "📻",
-    tone: "violet",
-    word: "TUNE",
-  },
-];
-const tabs = ["전체", "미션", "공연", "먹거리", "전시"];
-const roles = [
-  {
-    id: "student",
-    label: "학생",
-    description: "프로그램 탐색, QR 미션, 팀 활동",
-    icon: UserRound,
-  },
-  {
-    id: "booth",
-    label: "부스 운영자",
-    description: "참여 확인, 대기 현황, 부스 관리",
-    icon: Store,
-  },
-  {
-    id: "staff",
-    label: "축제 운영진",
-    description: "전체 현황, 공지, 신고 및 운영 관리",
-    icon: ShieldCheck,
-  },
-] as const;
-type Role = "guest" | (typeof roles)[number]["id"];
-
-function Mark() {
+type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
+function Brand() {
   return (
-    <a className="brand" href="#top">
-      <img src={brandLogo} alt="" />
+    <Link className="brand" to="/">
+      <img src={brandLogo} alt="CBFESTA" />
       <span>
-        CBFESTA<small>CHEONBUK · 2026</small>
+        CBFESTA<small>FESTIVAL PLATFORM</small>
       </span>
-    </a>
+    </Link>
   );
 }
-
-function ProgramCard({
-  item,
-  index,
-  onSelect,
-}: {
-  item: (typeof programs)[number];
-  index: number;
-  onSelect: () => void;
-}) {
-  return (
-    <motion.article
-      className="program-card"
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04 }}
-    >
-      <button
-        className={`program-image ${item.tone}`}
-        onClick={onSelect}
-        aria-label={`${item.title} 자세히 보기`}
-      >
-        <span className="program-number">0{index + 1}</span>
-        <strong className="poster-word">{item.word}</strong>
-        <span className="poster-orbit" />
-        <span className="tossface program-face">{item.face}</span>
-        <span className="image-label">+{item.score} P</span>
-      </button>
-      <div className="program-info">
-        <div>
-          <span>{item.category}</span>
-          <button aria-label="관심 프로그램">
-            <Heart />
-          </button>
-        </div>
-        <h3>{item.title}</h3>
-        <p>
-          <MapPin /> {item.place}
-        </p>
-        <p>
-          <Clock3 /> {item.time}
-        </p>
-      </div>
-    </motion.article>
-  );
+function formatDate(value: string | null) {
+  return value
+    ? new Intl.DateTimeFormat("ko-KR", {
+        month: "long",
+        day: "numeric",
+        weekday: "short",
+      }).format(new Date(value))
+    : "축제 준비 중";
+}
+function roleRoute(role: string | undefined) {
+  return role === "booth_operator"
+    ? "/booth"
+    : ["owner", "admin", "staff"].includes(role ?? "")
+      ? "/admin"
+      : "/teams";
 }
 
 export default function App() {
-  const [tab, setTab] = useState("전체");
-  const [detail, setDetail] = useState<(typeof programs)[number] | null>(null);
-  const [search, setSearch] = useState(false);
-  const [editingTeam, setEditingTeam] = useState(false);
-  const demoRole: Role = "guest";
   const auth = useAuth();
-  const membershipRole = auth.activeMembership?.role;
-  const role: Role = auth.configured
-    ? !auth.user
-      ? "guest"
-      : membershipRole === "booth_operator"
-        ? "booth"
-        : ["owner", "admin", "staff"].includes(membershipRole ?? "")
-          ? "staff"
-          : "student"
-    : demoRole;
-  const [team, setTeam] = useState({
-    name: "말랑여우",
-    logoUrl: demoTeamLogo as string | null,
-    primaryColor: "#d48645",
-  });
-  useEffect(
-    () => () => {
-      if (team.logoUrl?.startsWith("blob:")) URL.revokeObjectURL(team.logoUrl);
-    },
-    [team.logoUrl],
+  const [festival, setFestival] = useState<Tables<"festivals"> | null>(null);
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+  const membershipFestival = auth.activeMembership?.festivals;
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      setError("");
+      try {
+        const current = membershipFestival ?? (await getCurrentFestival());
+        if (cancelled) return;
+        setFestival(current);
+        setCatalog(current ? await getFestivalCatalog(current.id) : null);
+      } catch (caught) {
+        if (!cancelled)
+          setError(
+            caught instanceof Error
+              ? caught.message
+              : "축제 정보를 불러오지 못했습니다.",
+          );
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [membershipFestival]);
+  const programs = useMemo(
+    () =>
+      (catalog?.programs ?? []).filter((program) =>
+        `${program.title} ${program.description ?? ""}`
+          .toLowerCase()
+          .includes(query.toLowerCase()),
+      ),
+    [catalog, query],
   );
-  const selectLogo = (file?: File) => {
-    if (
-      !file ||
-      !["image/png", "image/jpeg", "image/webp", "image/svg+xml"].includes(
-        file.type,
-      ) ||
-      file.size > 5_000_000
-    )
-      return;
-    setTeam((current) => {
-      if (current.logoUrl?.startsWith("blob:"))
-        URL.revokeObjectURL(current.logoUrl);
-      return { ...current, logoUrl: URL.createObjectURL(file) };
-    });
-  };
-  if (auth.loading)
+  if (auth.loading || loading)
     return (
       <div className="app-loading">
         <img src={brandLogo} alt="" />
         <span>Loading festival…</span>
       </div>
     );
-  if (auth.configured && auth.user && auth.memberships.length === 0)
-    return <FestivalOnboarding />;
-  return (
-    <div className="site" id="top">
-      <header className="header">
-        <Mark />
-        <nav className="main-links">
-          {role === "booth" ? (
-            <>
-              <Link to="/booth">OVERVIEW</Link>
-              <Link to="/booth/check-in">CHECK-IN</Link>
-              <Link to="/booth/settings">부스 설정</Link>
-            </>
-          ) : role === "staff" ? (
-            <>
-              <Link to="/admin">OVERVIEW</Link>
-              <Link to="/admin/issues">ISSUES</Link>
-              <Link to="/admin/programs">프로그램 관리</Link>
-            </>
+  if (error)
+    return (
+      <main className="empty-festival">
+        <Brand />
+        <section>
+          <h1>연결할 수 없어요.</h1>
+          <p>{error}</p>
+        </section>
+      </main>
+    );
+  if (!festival)
+    return (
+      <main className="empty-festival">
+        <Brand />
+        <section>
+          <CalendarDays />
+          <span>FESTIVAL SETUP</span>
+          <h1>축제를 준비하고 있어요.</h1>
+          <p>
+            운영진이 단일 축제 설정을 완료하면 프로그램과 부스가 이곳에
+            표시됩니다.
+          </p>
+          {auth.user ? (
+            <Link className="secondary-action" to="/login">
+              내 계정
+            </Link>
           ) : (
-            <>
-              <Link to="/programs">프로그램</Link>
-              <Link to="/teams">팀 랭킹</Link>
-              <a href="#guide">축제 안내</a>
-            </>
+            <Link className="primary-action" to="/login">
+              <LogIn /> 로그인
+            </Link>
           )}
+        </section>
+      </main>
+    );
+  const role = auth.activeMembership?.role;
+  return (
+    <div className="site live-site">
+      <header className="header">
+        <Brand />
+        <nav className="main-links">
+          <Link to="/programs">PROGRAMS</Link>
+          <Link to="/teams">TEAMS</Link>
+          <Link to="/map">MAP</Link>
         </nav>
         <div className="header-tools">
-          <button onClick={() => setSearch(true)} aria-label="검색">
-            <Search />
-          </button>
-          <button aria-label="알림">
-            <Bell />
-            <i />
-          </button>
-          <Link className="login-button" to="/login">
-            <LogIn />{" "}
-            {role === "guest"
-              ? "로그인"
-              : (auth.user?.user_metadata.full_name ??
-                roles.find((item) => item.id === role)?.label)}
+          <Link
+            className="login-button"
+            to={auth.user ? roleRoute(role) : "/login"}
+          >
+            {auth.user ? (
+              <>
+                <ShieldCheck /> MY SPACE
+              </>
+            ) : (
+              <>
+                <LogIn /> 로그인
+              </>
+            )}
           </Link>
         </div>
       </header>
-      {role !== "guest" && (
-        <nav className={`role-bar ${role}`} aria-label="역할별 빠른 메뉴">
-          <span>{roles.find((item) => item.id === role)?.label} 모드</span>
-          {role === "student" ? (
-            <>
-              <button>
-                <QrCode />
-                QR 참여
-              </button>
-              <button>
-                <Map />내 주변
-              </button>
-              <button>
-                <Users />
-                우리 팀
-              </button>
-            </>
-          ) : role === "booth" ? (
-            <>
-              <button>
-                <QrCode />
-                참여 확인
-              </button>
-              <button>
-                <Users />
-                대기 12명
-              </button>
-              <button>
-                <Store />
-                부스 관리
-              </button>
-            </>
-          ) : (
-            <>
-              <button>
-                <ShieldCheck />
-                운영 현황
-              </button>
-              <button>
-                <Megaphone />
-                공지 발송
-              </button>
-              <button>
-                <Bell />
-                신고 3건
-              </button>
-            </>
-          )}
-        </nav>
-      )}
       <main>
-        <section className="lead">
-          <div className="lead-copy">
-            <span className="edition">9월 25일 · 축제 둘째 날</span>
-            <h1>
-              지금,
-              <br />
-              어디 갈래?
-            </h1>
-            <p>공연 12 · 부스 28 · 미션 16</p>
-            <div className="lead-actions">
-              <button className="action-black">
-                <QrCode /> QR 참여하기
-              </button>
-              <a href="#programs">
-                프로그램 찾기 <ChevronRight />
-              </a>
-            </div>
-          </div>
-          <div className="lead-visual" id="team">
-            <div className="team-heading">
-              <span>MY TEAM</span>
-              <h2>{team.name}</h2>
-              <p>
-                <b>2위</b> · 18,420 P
-              </p>
-              <button onClick={() => setEditingTeam(true)}>
-                <Pencil /> 팀 정보 편집
-              </button>
-            </div>
-            <div className="artifact-wrap">
-              <Suspense fallback={<div className="artifact-fallback" />}>
-                <TeamArtifact
-                  teamName={team.name}
-                  logoUrl={team.logoUrl}
-                  primaryColor={team.primaryColor}
-                />
-              </Suspense>
-            </div>
-            <div className="team-next">
-              다음 레벨까지 <b>580 P</b>
-              <i>
-                <span />
-              </i>
-            </div>
-          </div>
-        </section>
-        <section className="ticker">
-          <b>LIVE</b>
-          <span>현재 참여 1,248명</span>
-          <span>·</span>
-          <span>청룡팀이 580점을 더 모으면 아티팩트가 진화해요</span>
-          <button>
-            팀 현황 <ChevronRight />
-          </button>
-        </section>
-        <section className="catalog" id="programs">
-          <div className="catalog-head">
-            <div>
-              <span>EXPLORE THE FESTA</span>
-              <h2>지금 열려 있어요</h2>
-            </div>
-            <div className="carousel-controls">
-              <button disabled aria-label="이전">
-                <ChevronLeft />
-              </button>
-              <button aria-label="다음">
-                <ChevronRight />
-              </button>
-            </div>
-          </div>
-          <div className="tabs" role="tablist">
-            {tabs.map((item) => (
-              <button
-                role="tab"
-                aria-selected={tab === item}
-                className={tab === item ? "selected" : ""}
-                onClick={() => setTab(item)}
-                key={item}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-          <div className="program-grid">
-            {programs.map((item, index) => (
-              <ProgramCard
-                key={item.id}
-                item={item}
-                index={index}
-                onSelect={() => setDetail(item)}
-              />
-            ))}
-          </div>
-        </section>
-        <section className="guide" id="guide">
+        <section className="festival-hero">
           <div>
-            <span>16:40</span>
-            <p>지금 학교에서</p>
+            <span>
+              {formatDate(festival.starts_at)} · {festival.status.toUpperCase()}
+            </span>
+            <h1>{festival.name}</h1>
+            <p>지금 열려 있는 프로그램과 부스를 찾아보세요.</p>
+            <div className="hero-actions">
+              <Link className="primary-action" to="/programs">
+                <Search /> 프로그램 찾기
+              </Link>
+              {auth.user && (
+                <Link className="secondary-action" to={roleRoute(role)}>
+                  내 업무 공간 <ArrowRight />
+                </Link>
+              )}
+            </div>
           </div>
-          <h2>
-            곧 시작하는
-            <br />
-            무대를 놓치지 마세요.
-          </h2>
-          <ol>
-            <li>
-              <time>17:00</time>
-              <span>
-                <b>댄스부 스트릿 스테이지</b>중앙 광장
-              </span>
-              <ChevronRight />
-            </li>
-            <li>
-              <time>17:20</time>
-              <span>
-                <b>밴드부 앙코르 공연</b>대강당
-              </span>
-              <ChevronRight />
-            </li>
-            <li>
-              <time>18:00</time>
-              <span>
-                <b>팀 대항 결승 미션</b>운동장
-              </span>
-              <ChevronRight />
-            </li>
-          </ol>
+          <aside>
+            <b>LIVE DIRECTORY</b>
+            <dl>
+              <div>
+                <dt>PROGRAMS</dt>
+                <dd>{catalog?.programs?.length ?? 0}</dd>
+              </div>
+              <div>
+                <dt>BOOTHS</dt>
+                <dd>{catalog?.booths?.length ?? 0}</dd>
+              </div>
+              <div>
+                <dt>TEAMS</dt>
+                <dd>{catalog?.teams?.length ?? 0}</dd>
+              </div>
+            </dl>
+          </aside>
+        </section>
+        <section className="live-catalog">
+          <header>
+            <div>
+              <span>EXPLORE</span>
+              <h2>프로그램</h2>
+            </div>
+            <label className="catalog-search">
+              <Search />
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="프로그램, 부스 검색"
+              />
+            </label>
+          </header>
+          {programs.length === 0 ? (
+            <div className="catalog-empty">
+              <CalendarDays />
+              <h3>
+                {query
+                  ? "검색 결과가 없어요."
+                  : "공개된 프로그램이 아직 없어요."}
+              </h3>
+            </div>
+          ) : (
+            <div className="program-grid">
+              {programs.map((program) => (
+                <Link
+                  className="live-program-card"
+                  to={`/programs/${program.id}`}
+                  key={program.id}
+                >
+                  <div
+                    className="program-cover"
+                    style={{
+                      backgroundColor:
+                        catalog?.categories?.find(
+                          (category) => category.id === program.category_id,
+                        )?.color ?? "#f0e4e9",
+                    }}
+                  >
+                    <span>{program.kind.toUpperCase()}</span>
+                    <b>
+                      {program.points > 0 ? `+${program.points} P` : "OPEN"}
+                    </b>
+                  </div>
+                  <small>
+                    {catalog?.categories?.find(
+                      (category) => category.id === program.category_id,
+                    )?.name ?? program.kind}
+                  </small>
+                  <h3>{program.title}</h3>
+                  <p>
+                    {program.description ?? "상세 정보 보기"}
+                    <ArrowRight />
+                  </p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+        <section className="teams-preview">
+          <header>
+            <div>
+              <span>TEAM BOARD</span>
+              <h2>현재 팀</h2>
+            </div>
+            <Link to="/teams">
+              전체 랭킹 <ArrowRight />
+            </Link>
+          </header>
+          {catalog?.teams?.length ? (
+            <div>
+              {(catalog?.teams ?? []).slice(0, 4).map((team, index) => (
+                <article key={team.id}>
+                  <b>{index + 1}</b>
+                  <i style={{ backgroundColor: team.primary_color }} />{" "}
+                  <span>{team.name}</span>
+                  <strong>{team.score.toLocaleString()} P</strong>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p>팀이 등록되면 이곳에 실시간 랭킹이 표시됩니다.</p>
+          )}
         </section>
       </main>
-      <nav className="mobile-nav">
-        {role === "booth" ? (
-          <>
-            <button className="active">
-              <Home />
-              <span>현황</span>
-            </button>
-            <button>
-              <Users />
-              <span>대기</span>
-            </button>
-            <button className="scan">
-              <QrCode />
-            </button>
-            <button>
-              <Package />
-              <span>재고</span>
-            </button>
-            <button>
-              <Store />
-              <span>부스</span>
-            </button>
-          </>
-        ) : role === "staff" ? (
-          <>
-            <button className="active">
-              <Home />
-              <span>현황</span>
-            </button>
-            <button>
-              <AlertTriangle />
-              <span>이슈</span>
-            </button>
-            <button className="scan">
-              <Megaphone />
-            </button>
-            <button>
-              <Users />
-              <span>인원</span>
-            </button>
-            <button>
-              <ShieldCheck />
-              <span>관리</span>
-            </button>
-          </>
-        ) : (
-          <>
-            <button className="active">
-              <Home />
-              <span>홈</span>
-            </button>
-            <button>
-              <Search />
-              <span>탐색</span>
-            </button>
-            <button className="scan">
-              <QrCode />
-            </button>
-            <button>
-              <Map />
-              <span>지도</span>
-            </button>
-            <button>
-              <Users />
-              <span>팀</span>
-            </button>
-          </>
-        )}
-      </nav>
-      <AnimatePresence>
-        {(detail || search || editingTeam) && (
-          <motion.div
-            className="overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={() => {
-              setDetail(null);
-              setSearch(false);
-              setEditingTeam(false);
-            }}
-          >
-            {search ? (
-              <motion.div
-                className="search-sheet"
-                initial={{ y: -20 }}
-                animate={{ y: 0 }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Search />
-                <input autoFocus placeholder="프로그램, 부스, 장소 검색" />
-                <button onClick={() => setSearch(false)}>
-                  <X />
-                </button>
-              </motion.div>
-            ) : editingTeam ? (
-              <motion.aside
-                className="detail-sheet team-editor"
-                initial={{ x: "100%" }}
-                animate={{ x: 0 }}
-                exit={{ x: "100%" }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <button
-                  className="sheet-close"
-                  onClick={() => setEditingTeam(false)}
-                >
-                  <X />
-                </button>
-                <span>TEAM ARTIFACT</span>
-                <h2>우리 팀 엠블럼</h2>
-                <p>팀의 로고와 대표색이 3D 아티팩트에 실시간으로 적용됩니다.</p>
-                <label className="upload-zone">
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    onChange={(e) => selectLogo(e.target.files?.[0])}
-                  />
-                  <ImageUp />
-                  <b>로고 이미지 선택</b>
-                  <small>PNG, JPG, WEBP, SVG · 최대 5MB</small>
-                </label>
-                <label className="editor-field">
-                  <span>팀 이름</span>
-                  <input
-                    maxLength={12}
-                    value={team.name}
-                    onChange={(e) => setTeam({ ...team, name: e.target.value })}
-                  />
-                </label>
-                <label className="editor-field color-field">
-                  <span>대표 색상</span>
-                  <input
-                    type="color"
-                    value={team.primaryColor}
-                    onChange={(e) =>
-                      setTeam({ ...team, primaryColor: e.target.value })
-                    }
-                  />
-                  <b>{team.primaryColor.toUpperCase()}</b>
-                </label>
-                <button
-                  className="action-black sheet-action"
-                  onClick={() => setEditingTeam(false)}
-                >
-                  미리보기 적용 <ChevronRight />
-                </button>
-              </motion.aside>
-            ) : (
-              detail && (
-                <motion.aside
-                  className="detail-sheet"
-                  initial={{ x: "100%" }}
-                  animate={{ x: 0 }}
-                  exit={{ x: "100%" }}
-                  transition={{ type: "spring", damping: 28, stiffness: 260 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <button
-                    className="sheet-close"
-                    onClick={() => setDetail(null)}
-                  >
-                    <X />
-                  </button>
-                  <div className={`sheet-image ${detail.tone}`}>
-                    <span className="tossface">{detail.face}</span>
-                  </div>
-                  <span>{detail.category}</span>
-                  <h2>{detail.title}</h2>
-                  <p>
-                    현장에서 QR을 찾아 인증하면 우리 팀 점수가 바로 올라갑니다.
-                  </p>
-                  <dl>
-                    <div>
-                      <dt>장소</dt>
-                      <dd>{detail.place}</dd>
-                    </div>
-                    <div>
-                      <dt>운영</dt>
-                      <dd>{detail.time}</dd>
-                    </div>
-                    <div>
-                      <dt>획득</dt>
-                      <dd>+{detail.score} P</dd>
-                    </div>
-                  </dl>
-                  <button className="action-black sheet-action">
-                    미션 시작하기 <ChevronRight />
-                  </button>
-                </motion.aside>
-              )
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
