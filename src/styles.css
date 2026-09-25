@@ -293,6 +293,11 @@ a.metric.accent:hover { background: #000; }
 .management-row > a, .management-row > button { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: var(--radius-sm); }
 .management-row > a:hover, .management-row > button:hover { background: #f5f5f4; }
 .management-row > a svg, .management-row > button svg { width: 16px; }
+.program-row { grid-template-columns: minmax(200px,1fr) 180px 90px 80px; }
+.row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+.icon-action { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: var(--radius-sm); color: var(--secondary); }
+.icon-action:hover { background: #f5f5f4; color: var(--strong); }
+.icon-action svg { width: 16px; }
 .program-row > span { display: grid; gap: 4px; }
 .program-row small { font-size: 11px; color: var(--muted); }
 .program-row em { font-size: 11px; font-style: normal; text-transform: uppercase; color: var(--secondary); }

@@ -205,6 +205,35 @@ export async function createProgram(values: TablesInsert<"programs">) {
   return data;
 }
 
+export async function getProgram(id: number) {
+  const { data, error } = await requireClient()
+    .from("programs")
+    .select("*")
+    .eq("id", id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateProgram(
+  id: number,
+  values: TablesUpdate<"programs">,
+) {
+  const { data, error } = await requireClient()
+    .from("programs")
+    .update(values)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteProgram(id: number) {
+  const { error } = await requireClient().from("programs").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function updateCategory(
   id: number,
   values: TablesUpdate<"categories">,
