@@ -5,7 +5,9 @@ import {
   Plus,
   Save,
   Shuffle,
+  Trash2,
   Upload,
+  UserRound,
   Users,
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -13,6 +15,7 @@ import type { Tables } from "../../lib/supabase/database.types";
 import {
   balanceTeams,
   createTeam,
+  deleteTeam,
   getAdminTeams,
   getTeam,
   getTeamRoster,
@@ -32,11 +35,12 @@ export function AdminTeamsPage() {
   );
   const [loading, setLoading] = useState(true);
   const [balancing, setBalancing] = useState(false);
-  const [teamSize, setTeamSize] = useState(0);
+  const [teamSize, setTeamSize] = useState(5);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
-  useEffect(() => {
+  const reload = () => {
     if (!festivalId) return;
     void Promise.all([getAdminTeams(festivalId), getTeamRoster(festivalId)])
       .then(([teamRows, roster]) => {
@@ -54,7 +58,25 @@ export function AdminTeamsPage() {
         ),
       )
       .finally(() => setLoading(false));
-  }, [festivalId]);
+  };
+  useEffect(reload, [festivalId]);
+
+  const remove = async (team: Team) => {
+    if (!confirm(`"${team.name}" 팀을 삭제할까요? 팀원 배정도 함께 사라져요.`))
+      return;
+    setDeletingId(team.id);
+    setError("");
+    try {
+      await deleteTeam(team.id);
+      reload();
+    } catch (caught) {
+      setError(
+        caught instanceof Error ? caught.message : "팀을 삭제하지 못했습니다.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const balance = async () => {
     if (!festivalId) return;
@@ -71,9 +93,9 @@ export function AdminTeamsPage() {
           ),
         );
       }
-      const result = await balanceTeams(festivalId);
+      const result = await balanceTeams(festivalId, teamSize > 0 ? teamSize : undefined);
       setMessage(
-        `${result.assigned_count}명 배정 완료 · 미배정 ${result.unassigned_count}명`,
+        `${result.teams_created > 0 ? `${result.teams_created}개 팀 자동 생성 · ` : ""}${result.assigned_count}명 배정 완료 · 미배정 ${result.unassigned_count}명`,
       );
       const [teamRows, roster] = await Promise.all([
         getAdminTeams(festivalId),
@@ -124,8 +146,12 @@ export function AdminTeamsPage() {
           </label>
           <button
             className="secondary-action"
-            disabled={balancing || teams.length === 0}
-            title={teams.length === 0 ? "먼저 팀을 하나 이상 만들어야 자동 배정을 할 수 있어요." : undefined}
+            disabled={balancing || (teams.length === 0 && teamSize <= 0)}
+            title={
+              teams.length === 0 && teamSize <= 0
+                ? "팀이 없어요. '팀당 인원'을 입력하면 필요한 만큼 팀을 자동으로 만들어요."
+                : undefined
+            }
             onClick={() => void balance()}
           >
             <Shuffle /> {balancing ? "배정 중…" : "자동 배정"}
@@ -138,7 +164,11 @@ export function AdminTeamsPage() {
       {teams.length === 0 && !loading && (
         <div className="admin-note">
           <Users />
-          <p>자동 배정을 하려면 먼저 "새 팀"으로 팀을 하나 이상 만드세요.</p>
+          <p>
+            등록된 팀이 없어요. "팀당 인원"을 입력하고 자동 배정하면 필요한
+            수만큼 팀을 만들어 바로 나눠 배정해요. 직접 팀을 만들려면 "새 팀"을
+            누르세요.
+          </p>
         </div>
       )}
       {message && (
@@ -156,7 +186,7 @@ export function AdminTeamsPage() {
         ) : (
           <>
             {teams.map((team) => (
-              <article className="management-row" key={team.id}>
+              <article className="management-row team-row" key={team.id}>
                 <span className="category-name">
                   <i style={{ backgroundColor: team.primary_color }} />
                   <b>{team.name}</b>
@@ -174,6 +204,13 @@ export function AdminTeamsPage() {
                 >
                   <Pencil />
                 </Link>
+                <button
+                  aria-label={`${team.name} 삭제`}
+                  disabled={deletingId === team.id}
+                  onClick={() => void remove(team)}
+                >
+                  <Trash2 />
+                </button>
               </article>
             ))}
             {teams.length === 0 && (
@@ -337,16 +374,28 @@ export function NewTeamPage() {
   );
 }
 
+type RosterMember = Tables<"team_members"> & {
+  profile: Pick<Tables<"profiles">, "display_name" | "student_number"> | null;
+};
+
 export function EditTeamPage() {
   const { teamId } = useParams();
   const [team, setTeam] = useState<Team | null>(null);
+  const [roster, setRoster] = useState<RosterMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   useEffect(() => {
     const id = Number(teamId);
     if (Number.isNaN(id)) return;
     void getTeam(id)
-      .then(setTeam)
+      .then(async (item) => {
+        setTeam(item);
+        const allRoster = await getTeamRoster(item.festival_id);
+        setRoster(
+          allRoster.filter((member) => member.team_id === id) as RosterMember[],
+        );
+      })
       .catch((caught) =>
         setError(
           caught instanceof Error ? caught.message : "팀을 불러오지 못했습니다.",
@@ -354,6 +403,7 @@ export function EditTeamPage() {
       )
       .finally(() => setLoading(false));
   }, [teamId]);
+
   return (
     <main className="management-page">
       <header className="management-header">
@@ -372,7 +422,42 @@ export function EditTeamPage() {
           <LoaderCircle /> 불러오는 중…
         </div>
       ) : (
-        team && <TeamForm team={team} onSaved={setTeam} />
+        team && (
+          <>
+            <TeamForm team={team} onSaved={setTeam} />
+            <section className="permission-table roster-table">
+              <div className="management-header">
+                <div>
+                  <span>ROSTER</span>
+                  <h2>팀원</h2>
+                  <p>
+                    팀원 누구나 학생용 화면(내 팀 관리)에서 팀 이름·색상·로고를
+                    직접 수정할 수 있어요.
+                  </p>
+                </div>
+              </div>
+              {roster.length === 0 && (
+                <div className="management-empty">
+                  <Users />
+                  <h2>배정된 팀원이 없어요.</h2>
+                </div>
+              )}
+              {roster.map((member) => (
+                <article key={member.user_id}>
+                  <span className="member-avatar">
+                    {member.profile?.display_name?.slice(0, 1) ?? (
+                      <UserRound />
+                    )}
+                  </span>
+                  <span className="member-info">
+                    <b>{member.profile?.display_name ?? "이름 미설정"}</b>
+                    <small>{member.profile?.student_number ?? ""}</small>
+                  </span>
+                </article>
+              ))}
+            </section>
+          </>
+        )
       )}
     </main>
   );

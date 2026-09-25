@@ -42,6 +42,7 @@ import {
 import { AdminDashboard, BoothDashboard } from "../RoleDashboards";
 import { AuthSheet } from "../features/auth/AuthSheet";
 import { AccountSettingsPage } from "../features/account/AccountSettingsPage";
+import { MyTeamPage } from "../features/team/MyTeamPage";
 import {
   AdminCategoriesPage,
   NewCategoryPage,
@@ -982,6 +983,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
       <Route path="/schedule" element={<StudentRoute><SchedulePage /></StudentRoute>} />
       <Route path="/schedule/:programId" element={<StudentRoute><ProgramDetailPage /></StudentRoute>} />
       <Route path="/teams" element={<StudentRoute><TeamsPage /></StudentRoute>} />
+      <Route path="/teams/mine" element={<StudentRoute><MyTeamPage /></StudentRoute>} />
       <Route path="/reservations" element={<StudentRoute><ReservationsPage /></StudentRoute>} />
       <Route path="/booths" element={<StudentRoute><BoothsPage /></StudentRoute>} />
       <Route path="/booths/:boothId" element={<StudentRoute><BoothDetailPage /></StudentRoute>} />

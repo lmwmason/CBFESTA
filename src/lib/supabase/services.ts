@@ -543,6 +543,11 @@ export async function updateTeam(id: number, values: TablesUpdate<"teams">) {
   return data;
 }
 
+export async function deleteTeam(id: number) {
+  const { error } = await requireClient().from("teams").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function getTeamRoster(festivalId: number) {
   const client = requireClient();
   const { data: teams, error: teamError } = await client
@@ -574,13 +579,40 @@ export async function getTeamRoster(festivalId: number) {
   }));
 }
 
-export async function balanceTeams(festivalId: number) {
+export async function balanceTeams(festivalId: number, desiredTeamSize?: number) {
   const { data, error } = await requireClient().rpc(
     "assign_unassigned_students_to_teams",
-    { target_festival_id: festivalId },
+    { target_festival_id: festivalId, desired_team_size: desiredTeamSize ?? null },
   );
   if (error) throw error;
-  return data?.[0] ?? { assigned_count: 0, unassigned_count: 0 };
+  return (
+    data?.[0] ?? { assigned_count: 0, unassigned_count: 0, teams_created: 0 }
+  );
+}
+
+export async function updateTeamBranding(
+  teamId: number,
+  values: { name: string; primary_color: string; logo_url?: string | null },
+) {
+  const { data, error } = await requireClient().rpc("update_team_branding", {
+    target_team_id: teamId,
+    new_name: values.name,
+    new_primary_color: values.primary_color,
+    new_logo_url: values.logo_url ?? null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function getMyTeamMembership(userId: string) {
+  const { data, error } = await requireClient()
+    .from("team_members")
+    .select("*, teams(*)")
+    .eq("user_id", userId)
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 }
 
 export async function publishAnnouncement(

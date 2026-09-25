@@ -1,6 +1,9 @@
 import { Globe } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import developerLogo from "../assets/developer-logo.png";
 import { GithubMark, LinkedinMark, OrcidMark } from "./BrandIcons";
+
+const HIDDEN_ON = /^\/(admin|booth)(\/|$)/;
 
 const links = [
   { label: "GitHub", href: "https://github.com/lmwmason", icon: GithubMark },
@@ -22,6 +25,8 @@ const links = [
 ];
 
 export function Footer() {
+  const { pathname } = useLocation();
+  if (HIDDEN_ON.test(pathname)) return null;
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">

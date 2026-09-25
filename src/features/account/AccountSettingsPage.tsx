@@ -1,23 +1,24 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Save } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/auth-context";
 
 export function AccountSettingsPage() {
-  const { user, loading, updateAccount } = useAuth();
-  const [name, setName] = useState("");
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return <AccountSettingsForm key={user.id} user={user} />;
+}
+
+function AccountSettingsForm({ user }: { user: User }) {
+  const { updateAccount } = useAuth();
+  const [name, setName] = useState(user.user_metadata.full_name ?? "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
-
-  useEffect(() => {
-    if (user) setName(user.user_metadata.full_name ?? "");
-  }, [user]);
-
-  if (loading) return null;
-  if (!user) return <Navigate to="/login" replace />;
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();

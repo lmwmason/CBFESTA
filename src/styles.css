@@ -271,6 +271,10 @@ a.metric.accent:hover { background: #000; }
 .management-header { max-width: 1060px; margin: 0 auto 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; }
 .management-header > div > span { display: block; font: 700 11px Pretendard; letter-spacing: .12em; color: var(--muted); }
 .management-header h1 { margin: 8px 0; font-size: 30px; letter-spacing: -.03em; }
+.roster-table.permission-table { max-width: 620px; margin: 32px auto 0; }
+.roster-table .management-header { margin: 0; padding: 20px 20px 12px; }
+.roster-table .management-header h2 { margin: 6px 0; font-size: 16px; letter-spacing: -.02em; }
+.roster-table .management-header p { font-size: 12px; }
 .management-header p { margin: 0; color: var(--muted); font-size: 13px; }
 .back-link { font-size: 13px; color: var(--muted); }
 
@@ -297,6 +301,7 @@ a.metric.accent:hover { background: #000; }
 .program-row > span { display: grid; gap: 4px; }
 .program-row small { font-size: 11px; color: var(--muted); }
 .program-row em { font-size: 11px; font-style: normal; text-transform: uppercase; color: var(--secondary); }
+.team-row { grid-template-columns: minmax(200px,1fr) 140px 90px 44px 44px; }
 
 .management-loading, .management-empty { min-height: 220px; display: grid; place-content: center; justify-items: center; gap: 10px; color: var(--muted); text-align: center; }
 .management-loading svg { width: 20px; }
@@ -331,6 +336,8 @@ a.metric.accent:hover { background: #000; }
   .management-row > a { grid-column: 3; grid-row: 1/3; }
   .program-row { grid-template-columns: 1fr 34px 34px; }
   .program-row code, .program-row em { display: none; }
+  .team-row { grid-template-columns: 1fr 34px 34px; }
+  .team-row code, .team-row em { display: none; }
   .permission-table article { grid-template-columns: 36px 1fr; gap: 8px; padding: 12px; }
   .permission-chips article { grid-template-columns: 36px 1fr; }
   .role-chip-list { grid-column: 2; }

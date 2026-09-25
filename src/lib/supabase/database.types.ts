@@ -907,12 +907,35 @@ export type Database = {
         Returns: Json;
       };
       assign_unassigned_students_to_teams: {
-        Args: { target_festival_id: number };
-        Returns: { assigned_count: number; unassigned_count: number }[];
+        Args: { target_festival_id: number; desired_team_size?: number | null };
+        Returns: {
+          assigned_count: number;
+          unassigned_count: number;
+          teams_created: number;
+        }[];
       };
       lookup_student_by_number: {
         Args: { target_student_number: string };
         Returns: { user_id: string; display_name: string }[];
+      };
+      update_team_branding: {
+        Args: {
+          target_team_id: number;
+          new_name: string;
+          new_primary_color: string;
+          new_logo_url?: string | null;
+        };
+        Returns: {
+          created_at: string;
+          festival_id: number;
+          id: number;
+          logo_url: string | null;
+          member_capacity: number;
+          name: string;
+          primary_color: string;
+          score: number;
+          updated_at: string;
+        };
       };
     };
     Enums: {
