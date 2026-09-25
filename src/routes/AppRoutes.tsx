@@ -29,12 +29,14 @@ import brandLogo from "../assets/cbfesta-logo.png";
 import type { Tables } from "../lib/supabase/database.types";
 import {
   estimateWaitMinutes,
+  getBoothCurrencyLeaderboard,
   getBoothDetail,
   getBoothRatingSummary,
   getCurrentFestival,
   getFestivalCatalog,
   getMyQueueEntries,
   getMyQueueEntry,
+  getPersonalLeaderboard,
   joinQueue,
   lookupStudentByNumber,
   rateBooth,
@@ -398,8 +400,21 @@ function ProgramDetailPage() {
     </>
   );
 }
+type LeaderboardTab = "team" | "personal" | "booth";
 function TeamsPage() {
   const { festival, catalog, loading, error } = usePublicCatalog();
+  const [tab, setTab] = useState<LeaderboardTab>("team");
+  const [personal, setPersonal] = useState<
+    Awaited<ReturnType<typeof getPersonalLeaderboard>>
+  >([]);
+  const [boothBoard, setBoothBoard] = useState<
+    Awaited<ReturnType<typeof getBoothCurrencyLeaderboard>>
+  >([]);
+  useEffect(() => {
+    if (!festival) return;
+    void getPersonalLeaderboard(festival.id).then(setPersonal);
+    void getBoothCurrencyLeaderboard(festival.id).then(setBoothBoard);
+  }, [festival]);
   if (loading) return <Loading />;
   if (error) return <ErrorPage message={error} />;
   if (!festival)
@@ -417,32 +432,102 @@ function TeamsPage() {
         <PageBack />
         <header>
           <span>LEADERBOARD</span>
-          <h1>팀 랭킹</h1>
-          <p>{festival.name}의 현재 팀 점수입니다.</p>
+          <h1>랭킹</h1>
+          <p>{festival.name}의 현재 순위입니다.</p>
         </header>
-        <section className="leaderboard">
-          {teams.map((team, index) => (
-            <article key={team.id}>
-              <strong>{index + 1}</strong>
-              {team.logo_url ? (
-                <img src={team.logo_url} alt="" />
-              ) : (
-                <i style={{ backgroundColor: team.primary_color }} />
-              )}
-              <span>
-                <b>{team.name}</b>
-                <small>{team.score.toLocaleString()} P</small>
-              </span>
-              <ChevronRight />
-            </article>
-          ))}
-          {teams.length === 0 && (
-            <div className="catalog-empty">
-              <CalendarDays />
-              <h3>등록된 팀이 없어요.</h3>
-            </div>
-          )}
-        </section>
+        <div className="listing-filters">
+          <button
+            className={tab === "team" ? "active" : ""}
+            onClick={() => setTab("team")}
+          >
+            팀 순위
+          </button>
+          <button
+            className={tab === "personal" ? "active" : ""}
+            onClick={() => setTab("personal")}
+          >
+            개인 순위
+          </button>
+          <button
+            className={tab === "booth" ? "active" : ""}
+            onClick={() => setTab("booth")}
+          >
+            부스 인기 순위
+          </button>
+        </div>
+        {tab === "team" && (
+          <section className="leaderboard">
+            {teams.map((team, index) => (
+              <article key={team.id}>
+                <strong>{index + 1}</strong>
+                {team.logo_url ? (
+                  <img src={team.logo_url} alt="" />
+                ) : (
+                  <i style={{ backgroundColor: team.primary_color }} />
+                )}
+                <span>
+                  <b>{team.name}</b>
+                  <small>{team.score.toLocaleString()} P</small>
+                </span>
+                <ChevronRight />
+              </article>
+            ))}
+            {teams.length === 0 && (
+              <div className="catalog-empty">
+                <CalendarDays />
+                <h3>등록된 팀이 없어요.</h3>
+              </div>
+            )}
+          </section>
+        )}
+        {tab === "personal" && (
+          <section className="leaderboard">
+            {personal.map((row, index) => (
+              <article key={row.user_id}>
+                <strong>{index + 1}</strong>
+                {row.avatar_url ? (
+                  <img src={row.avatar_url} alt="" />
+                ) : (
+                  <i style={{ backgroundColor: "#e5e5e5" }} />
+                )}
+                <span>
+                  <b>{row.display_name}</b>
+                  <small>{row.score.toLocaleString()} P</small>
+                </span>
+              </article>
+            ))}
+            {personal.length === 0 && (
+              <div className="catalog-empty">
+                <CalendarDays />
+                <h3>아직 미션을 완료한 사람이 없어요.</h3>
+              </div>
+            )}
+          </section>
+        )}
+        {tab === "booth" && (
+          <section className="leaderboard">
+            {boothBoard.map((booth, index) => (
+              <article key={booth.id}>
+                <strong>{index + 1}</strong>
+                {booth.logo_url ? (
+                  <img src={booth.logo_url} alt="" />
+                ) : (
+                  <i style={{ backgroundColor: booth.accent_color }} />
+                )}
+                <span>
+                  <b>{booth.name}</b>
+                  <small>{booth.ad_currency.toLocaleString()} 코인</small>
+                </span>
+              </article>
+            ))}
+            {boothBoard.length === 0 && (
+              <div className="catalog-empty">
+                <CalendarDays />
+                <h3>등록된 부스가 없어요.</h3>
+              </div>
+            )}
+          </section>
+        )}
       </main>
     </>
   );
