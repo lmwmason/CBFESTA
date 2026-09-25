@@ -124,7 +124,8 @@ export function AdminTeamsPage() {
           </label>
           <button
             className="secondary-action"
-            disabled={balancing}
+            disabled={balancing || teams.length === 0}
+            title={teams.length === 0 ? "먼저 팀을 하나 이상 만들어야 자동 배정을 할 수 있어요." : undefined}
             onClick={() => void balance()}
           >
             <Shuffle /> {balancing ? "배정 중…" : "자동 배정"}
@@ -134,6 +135,12 @@ export function AdminTeamsPage() {
           </Link>
         </div>
       </header>
+      {teams.length === 0 && !loading && (
+        <div className="admin-note">
+          <Users />
+          <p>자동 배정을 하려면 먼저 "새 팀"으로 팀을 하나 이상 만드세요.</p>
+        </div>
+      )}
       {message && (
         <div className="admin-note">
           <Users />
