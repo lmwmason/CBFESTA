@@ -4,6 +4,7 @@ import {
   LayoutDashboard,
   LogIn,
   LogOut,
+  Settings,
   ShieldCheck,
   Store,
 } from "lucide-react";
@@ -82,6 +83,9 @@ export function AccountMenu() {
               <Store /> 부스 관리
             </Link>
           )}
+          <Link to="/account" onClick={() => setOpen(false)}>
+            <Settings /> 계정 설정
+          </Link>
           {memberships.length > 1 && (
             <label className="account-dropdown-festival">
               <span>현재 축제</span>

@@ -17,6 +17,7 @@ export type AuthValue = {
   signUp: (details: { id: string; password: string; name: string; studentNumber: string; accountType: 'student' | 'teacher' }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshMemberships: () => Promise<void>;
+  updateAccount: (values: { name?: string; password?: string }) => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthValue | null>(null);

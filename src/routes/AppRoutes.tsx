@@ -40,6 +40,7 @@ import {
 } from "../lib/supabase/services";
 import { AdminDashboard, BoothDashboard } from "../RoleDashboards";
 import { AuthSheet } from "../features/auth/AuthSheet";
+import { AccountSettingsPage } from "../features/account/AccountSettingsPage";
 import {
   AdminCategoriesPage,
   NewCategoryPage,
@@ -927,6 +928,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
     <Routes>
       <Route path="/" element={<StudentRoute>{home}</StudentRoute>} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/account" element={<AccountSettingsPage />} />
       <Route path="/report" element={<StudentRoute><ReportPage /></StudentRoute>} />
       <Route path="/programs" element={<Navigate to="/schedule" replace />} />
       <Route path="/programs/:programId" element={<Navigate to="/schedule" replace />} />

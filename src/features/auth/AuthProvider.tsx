@@ -126,6 +126,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     [signIn],
   );
+  const updateAccount = useCallback(
+    async ({ name, password }: { name?: string; password?: string }) => {
+      if (!supabase) throw new Error("Supabase 설정이 필요합니다.");
+      const payload: { password?: string; data?: Record<string, unknown> } = {};
+      if (password) payload.password = password;
+      if (name) payload.data = { full_name: name };
+      if (!payload.password && !payload.data) return;
+      const { error } = await supabase.auth.updateUser(payload);
+      if (error) throw error;
+      await refreshMemberships();
+    },
+    [refreshMemberships],
+  );
   const signOut = async () => {
     if (!supabase) return;
     const { error } = await supabase.auth.signOut();
@@ -153,6 +166,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       refreshMemberships,
+      updateAccount,
     }),
     [
       activeMembership,
@@ -163,6 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       refreshMemberships,
       signIn,
       signUp,
+      updateAccount,
     ],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
