@@ -128,6 +128,16 @@ export async function getBoothRatingSummary(boothId: number, userId?: string) {
   return { average, count, myStars: mine?.stars ?? null };
 }
 
+export async function getMyVisitedBoothIds(festivalId: number, userId: string) {
+  const { data, error } = await requireClient()
+    .from("checkins")
+    .select("booth_id")
+    .eq("festival_id", festivalId)
+    .eq("user_id", userId);
+  if (error) throw error;
+  return new Set((data ?? []).map((checkin) => checkin.booth_id));
+}
+
 export async function rateBooth(boothId: number, userId: string, stars: number) {
   const { error } = await requireClient()
     .from("booth_ratings")

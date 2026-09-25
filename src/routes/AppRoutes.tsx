@@ -34,6 +34,7 @@ import {
   getBoothRatingSummary,
   getCurrentFestival,
   getFestivalCatalog,
+  getMyVisitedBoothIds,
   getMyQueueEntries,
   getMyQueueEntry,
   getPersonalLeaderboard,
@@ -660,6 +661,24 @@ function ReservationsPage() {
 }
 function BoothsPage() {
   const { festival, catalog, loading, error } = usePublicCatalog();
+  const { user } = useAuth();
+  const [visitedBoothIds, setVisitedBoothIds] = useState<Set<number>>(new Set());
+  const [visitLoading, setVisitLoading] = useState(() => !!user);
+  const [tab, setTab] = useState<"visited" | "unvisited">("visited");
+
+  useEffect(() => {
+    if (!festival || !user) {
+      setVisitedBoothIds(new Set());
+      setVisitLoading(false);
+      return;
+    }
+    setVisitLoading(true);
+    void getMyVisitedBoothIds(festival.id, user.id)
+      .then(setVisitedBoothIds)
+      .catch(() => setVisitedBoothIds(new Set()))
+      .finally(() => setVisitLoading(false));
+  }, [festival, user]);
+
   if (loading) return <Loading />;
   if (error) return <ErrorPage message={error} />;
   if (!festival)
@@ -669,6 +688,23 @@ function BoothsPage() {
         <EmptyFestival />
       </>
     );
+  if (!user)
+    return (
+      <>
+        <Header />
+        <main className="listing-page simple-page">
+          <Users />
+          <h1>로그인이 필요해요.</h1>
+          <Link className="primary-action" to="/login?next=%2Fbooths">
+            로그인하기
+          </Link>
+        </main>
+      </>
+    );
+  const booths = catalog?.booths ?? [];
+  const visitedBooths = booths.filter((booth) => visitedBoothIds.has(booth.id));
+  const unvisitedBooths = booths.filter((booth) => !visitedBoothIds.has(booth.id));
+  const displayedBooths = tab === "visited" ? visitedBooths : unvisitedBooths;
   return (
     <>
       <Header />
@@ -677,10 +713,32 @@ function BoothsPage() {
         <header>
           <span>BOOTH DIRECTORY</span>
           <h1>부스</h1>
-          <p>현재 공개된 부스와 운영 상태입니다.</p>
+          <p>내가 방문한 부스와 아직 방문하지 않은 부스를 확인하세요.</p>
         </header>
+        <div className="listing-filters booth-visit-tabs" role="tablist" aria-label="부스 방문 상태">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "visited"}
+            className={tab === "visited" ? "active" : ""}
+            onClick={() => setTab("visited")}
+          >
+            방문한 부스 <span>{visitedBooths.length}</span>
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "unvisited"}
+            className={tab === "unvisited" ? "active" : ""}
+            onClick={() => setTab("unvisited")}
+          >
+            아직 방문 안 한 부스 <span>{unvisitedBooths.length}</span>
+          </button>
+        </div>
         <section className="booth-list">
-          {(catalog?.booths ?? []).map((booth) => {
+          {visitLoading ? (
+            <div className="management-loading"><LoaderCircle /> 방문 기록을 불러오는 중…</div>
+          ) : displayedBooths.map((booth) => {
             const category = catalog?.categories?.find(
               (candidate) => candidate.id === booth.category_id,
             );
@@ -703,10 +761,10 @@ function BoothsPage() {
               </Link>
             );
           })}
-          {!(catalog?.booths ?? []).length && (
+          {!visitLoading && displayedBooths.length === 0 && (
             <div className="catalog-empty">
               <MapPin />
-              <h3>공개된 부스가 없어요.</h3>
+              <h3>{tab === "visited" ? "아직 방문한 부스가 없어요." : "모든 부스를 방문했어요."}</h3>
             </div>
           )}
         </section>
@@ -736,10 +794,15 @@ function BoothDetailPage() {
     ReturnType<typeof getBoothRatingSummary>
   > | null>(null);
   const [ratingBusy, setRatingBusy] = useState(false);
+  const [visitedBoothIds, setVisitedBoothIds] = useState<Set<number>>(new Set());
 
   const submitRating = async (stars: number) => {
     if (!user) {
       navigate(`/login?next=${encodeURIComponent(`/booths/${id}`)}`);
+      return;
+    }
+    if (!visitedBoothIds.has(id)) {
+      setError("방문 완료한 부스에만 별점을 남길 수 있어요.");
       return;
     }
     setRatingBusy(true);
@@ -798,6 +861,11 @@ function BoothDetailPage() {
       setDetail(data);
       setMyQueue(user ? await getMyQueueEntry(id, user.id) : null);
       setRating(await getBoothRatingSummary(id, user?.id));
+      if (user && data.booth) {
+        setVisitedBoothIds(await getMyVisitedBoothIds(data.booth.festival_id, user.id));
+      } else {
+        setVisitedBoothIds(new Set());
+      }
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "부스 정보를 불러오지 못했습니다.",
@@ -869,6 +937,7 @@ function BoothDetailPage() {
     );
   const { booth, inventory, announcements, waitingCount } = detail;
   const waitMinutes = estimateWaitMinutes(booth, waitingCount);
+  const hasVisited = visitedBoothIds.has(id);
   return (
     <>
       <Header />
@@ -898,7 +967,7 @@ function BoothDetailPage() {
             <button
               key={value}
               type="button"
-              disabled={ratingBusy}
+              disabled={ratingBusy || !hasVisited}
               aria-label={`${value}점`}
               className={rating && value <= (rating.myStars ?? 0) ? "filled" : ""}
               onClick={() => void submitRating(value)}
@@ -912,6 +981,9 @@ function BoothDetailPage() {
               : "아직 평가가 없어요"}
           </span>
         </div>
+        {!hasVisited && (
+          <p className="rating-notice">체크인으로 방문을 완료하면 별점을 남길 수 있어요.</p>
+        )}
         <dl>
           <div>
             <dt>위치</dt>
