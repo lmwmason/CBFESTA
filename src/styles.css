@@ -659,27 +659,25 @@ a.metric.accent:hover { background: #000; }
 .ad-banner a { flex: 0 0 auto; display: block; border: 1px solid var(--line); line-height: 0; }
 .ad-banner img { width: 320px; max-width: 80vw; aspect-ratio: 4 / 1; object-fit: cover; }
 .festival-hero { padding: clamp(40px,6vw,72px) clamp(16px,6vw,80px) clamp(32px,5vw,56px); border-bottom: 1px solid var(--line); display: grid; grid-template-columns: minmax(0,1fr) minmax(260px,.4fr); gap: clamp(24px,5vw,64px); align-items: end; }
-.festival-hero > div > span, .live-catalog header span, .teams-preview header span { display: block; font: 700 11px Pretendard; letter-spacing: .1em; color: var(--muted); }
+.festival-hero > div > span, .live-catalog header span { display: block; font: 700 11px Pretendard; letter-spacing: .1em; color: var(--muted); }
 .festival-hero h1 { max-width: 760px; margin: 12px 0; font-size: clamp(32px,5vw,52px); line-height: 1.06; letter-spacing: -.03em; }
 .festival-hero p { max-width: 420px; color: var(--secondary); font-size: 14px; line-height: 1.7; }
 .hero-actions { display: flex; gap: 10px; margin-top: 24px; }
 .hero-actions svg { width: 16px; }
 .festival-hero aside { padding: 20px; border-top: 2px solid var(--ink); }
 .festival-hero aside > b { font: 700 11px Pretendard; letter-spacing: .1em; }
-.festival-hero dl { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin: 22px 0 0; }
-.festival-hero dt { font: 700 10px Pretendard; letter-spacing: .06em; color: var(--muted); }
-.festival-hero dd { margin: 4px 0 0; font-size: 20px; font-weight: 800; letter-spacing: -.03em; }
+.hero-rankings { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin: 18px 0 0; }
+.hero-rankings > div > span { display: block; margin-bottom: 8px; font: 700 10px Pretendard; letter-spacing: .06em; color: var(--muted); }
+.hero-rankings ol { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.hero-rankings li { display: flex; align-items: baseline; gap: 6px; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hero-rankings li.empty { color: var(--muted); font-weight: 400; }
+.hero-rankings li em { font-style: normal; font-weight: 800; color: var(--muted); font-size: 11px; flex: 0 0 auto; }
+.hero-ranking-link { display: flex; align-items: center; gap: 6px; margin-top: 18px; font-size: 12px; font-weight: 700; color: var(--strong); }
+.hero-ranking-link svg { width: 14px; }
 
-.live-catalog, .teams-preview { padding: clamp(32px,5vw,56px) clamp(16px,6vw,80px); }
-.live-catalog > header, .teams-preview > header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
-.live-catalog h2, .teams-preview h2 { margin: 8px 0 0; font-size: clamp(22px,3vw,32px); letter-spacing: -.03em; }
-.teams-preview { background: #f7f6f4; }
-.teams-preview header > a { display: flex; align-items: center; gap: 6px; font-size: 13px; }
-.teams-preview header > a svg { width: 15px; }
-.teams-preview article { display: grid; grid-template-columns: 32px 10px 1fr auto; align-items: center; gap: 10px; max-width: 720px; min-height: 50px; border-top: 1px solid var(--line); }
-.teams-preview article > i { width: 9px; height: 9px; border-radius: 50%; }
-.teams-preview article > span { font-weight: 700; }
-.teams-preview article > strong { font-size: 13px; font-weight: 700; }
+.live-catalog { padding: clamp(32px,5vw,56px) clamp(16px,6vw,80px); }
+.live-catalog > header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 24px; gap: 16px; }
+.live-catalog h2 { margin: 8px 0 0; font-size: clamp(22px,3vw,32px); letter-spacing: -.03em; }
 
 .empty-festival { min-height: 100vh; padding: 24px; }
 .empty-festival > .brand { display: flex; align-items: center; gap: 9px; }
@@ -695,7 +693,8 @@ a.metric.accent:hover { background: #000; }
   .festival-hero aside { margin-top: 32px; }
 }
 @media (max-width: 767px) {
-  .live-catalog, .teams-preview { padding: 32px 16px; }
+  .live-catalog { padding: 32px 16px; }
+  .hero-rankings { gap: 8px; }
   .live-catalog > header { display: block; }
   .catalog-search { margin-top: 16px; min-width: 0; }
   .hero-actions { flex-wrap: wrap; }

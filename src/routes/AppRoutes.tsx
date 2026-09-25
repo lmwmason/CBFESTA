@@ -95,7 +95,7 @@ function Header() {
       <nav>
         <Link to="/booths">BOOTHS</Link>
         <Link to="/schedule">SCHEDULE</Link>
-        <Link to="/teams">TEAMS</Link>
+        <Link to="/teams">RANKING</Link>
         <Link to="/reservations">MY QUEUE</Link>
         <Link to="/report">REPORT</Link>
       </nav>

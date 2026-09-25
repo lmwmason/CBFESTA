@@ -6,9 +6,11 @@ import type { Tables } from "./lib/supabase/database.types";
 import {
   getActiveBoothAds,
   getAnnouncements,
+  getBoothCurrencyLeaderboard,
   getCurrentFestival,
   getFestivalCatalog,
   getMyTeamMembership,
+  getPersonalLeaderboard,
   subscribeToFestival,
 } from "./lib/supabase/services";
 import { useAuth } from "./features/auth/auth-context";
@@ -41,6 +43,12 @@ export default function App() {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [announcements, setAnnouncements] = useState<Tables<"announcements">[]>([]);
   const [ads, setAds] = useState<Awaited<ReturnType<typeof getActiveBoothAds>>>([]);
+  const [personal, setPersonal] = useState<
+    Awaited<ReturnType<typeof getPersonalLeaderboard>>
+  >([]);
+  const [boothBoard, setBoothBoard] = useState<
+    Awaited<ReturnType<typeof getBoothCurrencyLeaderboard>>
+  >([]);
   const [myTeam, setMyTeam] = useState<Awaited<
     ReturnType<typeof getMyTeamMembership>
   > | null>(null);
@@ -60,19 +68,26 @@ export default function App() {
         if (cancelled) return;
         setFestival(current);
         if (current) {
-          const [catalogData, announcementData, adData] = await Promise.all([
-            getFestivalCatalog(current.id),
-            getAnnouncements(current.id),
-            getActiveBoothAds(current.id),
-          ]);
+          const [catalogData, announcementData, adData, personalData, boothBoardData] =
+            await Promise.all([
+              getFestivalCatalog(current.id),
+              getAnnouncements(current.id),
+              getActiveBoothAds(current.id),
+              getPersonalLeaderboard(current.id),
+              getBoothCurrencyLeaderboard(current.id),
+            ]);
           if (cancelled) return;
           setCatalog(catalogData);
           setAnnouncements(announcementData);
           setAds(adData);
+          setPersonal(personalData);
+          setBoothBoard(boothBoardData);
         } else {
           setCatalog(null);
           setAnnouncements([]);
           setAds([]);
+          setPersonal([]);
+          setBoothBoard([]);
         }
       } catch (caught) {
         if (!cancelled)
@@ -164,7 +179,7 @@ export default function App() {
         <nav className="main-links">
           <Link to="/booths">BOOTHS</Link>
           <Link to="/schedule">SCHEDULE</Link>
-          <Link to="/teams">TEAMS</Link>
+          <Link to="/teams">RANKING</Link>
           <Link to="/reservations">MY QUEUE</Link>
           <Link to="/report">REPORT</Link>
         </nav>
@@ -217,21 +232,48 @@ export default function App() {
             </div>
           </div>
           <aside>
-            <b>LIVE DIRECTORY</b>
-            <dl>
+            <b>RANKING</b>
+            <div className="hero-rankings">
               <div>
-                <dt>SCHEDULE</dt>
-                <dd>{catalog?.programs?.length ?? 0}</dd>
+                <span>팀</span>
+                <ol>
+                  {(catalog?.teams ?? []).slice(0, 3).map((team, index) => (
+                    <li key={team.id}>
+                      <em>{index + 1}</em>
+                      {team.name}
+                    </li>
+                  ))}
+                  {(catalog?.teams ?? []).length === 0 && <li className="empty">-</li>}
+                </ol>
               </div>
               <div>
-                <dt>BOOTHS</dt>
-                <dd>{catalog?.booths?.length ?? 0}</dd>
+                <span>개인</span>
+                <ol>
+                  {personal.slice(0, 3).map((row, index) => (
+                    <li key={row.user_id}>
+                      <em>{index + 1}</em>
+                      {row.display_name}
+                    </li>
+                  ))}
+                  {personal.length === 0 && <li className="empty">-</li>}
+                </ol>
               </div>
               <div>
-                <dt>TEAMS</dt>
-                <dd>{catalog?.teams?.length ?? 0}</dd>
+                <span>부스</span>
+                <ol>
+                  {boothBoard.slice(0, 3).map((booth, index) => (
+                    <li key={booth.id}>
+                      <em>{index + 1}</em>
+                      {booth.name}
+                    </li>
+                  ))}
+                  {boothBoard.length === 0 && <li className="empty">-</li>}
+                </ol>
               </div>
-            </dl>
+            </div>
+            <Link className="hero-ranking-link" to="/teams">
+              전체 랭킹 보기 <ArrowRight />
+            </Link>
           </aside>
         </section>
         <section className="live-catalog">
@@ -324,31 +366,6 @@ export default function App() {
                 </Link>
               ))}
             </div>
-          )}
-        </section>
-        <section className="teams-preview">
-          <header>
-            <div>
-              <span>TEAM BOARD</span>
-              <h2>현재 팀</h2>
-            </div>
-            <Link to="/teams">
-              전체 랭킹 <ArrowRight />
-            </Link>
-          </header>
-          {catalog?.teams?.length ? (
-            <div>
-              {(catalog?.teams ?? []).slice(0, 4).map((team, index) => (
-                <article key={team.id}>
-                  <b>{index + 1}</b>
-                  <i style={{ backgroundColor: team.primary_color }} />{" "}
-                  <span>{team.name}</span>
-                  <strong>{team.score.toLocaleString()} P</strong>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p>팀이 등록되면 이곳에 실시간 랭킹이 표시됩니다.</p>
           )}
         </section>
       </main>
