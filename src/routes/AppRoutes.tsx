@@ -40,6 +40,8 @@ import {
   StudentCheckinPage,
 } from "../features/booth/BoothQrPages";
 import { BoothSettingsPage } from "../features/booth/BoothSettingsPage";
+import { BoothQueuePage } from "../features/booth/BoothQueuePage";
+import { BoothInventoryPage } from "../features/booth/BoothInventoryPage";
 import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
@@ -426,7 +428,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth/queue"
         element={
           <RoleRoute allow={["owner", "admin", "staff", "booth_operator"]}>
-            <UnavailablePage eyebrow="BOOTH DESK" title="대기 관리" />
+            <BoothQueuePage />
           </RoleRoute>
         }
       />
@@ -434,7 +436,7 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         path="/booth/inventory"
         element={
           <RoleRoute allow={["owner", "admin", "staff", "booth_operator"]}>
-            <UnavailablePage eyebrow="BOOTH DESK" title="재고 관리" />
+            <BoothInventoryPage />
           </RoleRoute>
         }
       />
