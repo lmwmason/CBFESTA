@@ -1,0 +1,13 @@
+{
+  "name": "CBFESTA 2026",
+  "short_name": "CBFESTA",
+  "description": "공연, 부스, 미션을 한곳에서 만나는 천북 축제",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fffaf7",
+  "theme_color": "#f52a9a",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

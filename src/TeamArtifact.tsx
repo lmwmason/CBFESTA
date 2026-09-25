@@ -1,51 +1,38 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
-const PARTICLES = new Float32Array(Array.from({ length: 90 }, (_, i) => {
-  const point = Math.floor(i / 3) + 1;
-  const axis = i % 3;
-  const scale = axis === 0 ? 2.3 : axis === 1 ? 1.9 : 1;
-  return Math.sin(point * (axis + 1) * 12.9898) * scale;
-}));
+/* eslint-disable react-hooks/immutability -- Three.js textures are mutable GPU resources by design. */
+type Props = { teamName: string; logoUrl?: string | null; primaryColor: string };
 
-function DragonStroke() {
-  const body = useMemo(() => new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-.62,-.48,.25), new THREE.Vector3(-.1,-.64,.34), new THREE.Vector3(.52,-.3,.4),
-    new THREE.Vector3(.22,.12,.45), new THREE.Vector3(-.38,.02,.42), new THREE.Vector3(-.5,.5,.38),
-    new THREE.Vector3(.08,.7,.38), new THREE.Vector3(.53,.42,.34),
-  ]), []);
-  return <group>
-    <mesh><tubeGeometry args={[body,64,.105,10,false]} /><meshPhysicalMaterial color="#d5f6ff" emissive="#198dd0" emissiveIntensity={1.1} metalness={.45} roughness={.12} clearcoat={1} /></mesh>
-    <mesh position={[.55,.43,.35]} rotation={[0,0,-.25]}><coneGeometry args={[.19,.42,5]} /><meshStandardMaterial color="#e9fbff" emissive="#2aa8ed" emissiveIntensity={.8} /></mesh>
-    <mesh position={[.47,.52,.51]}><sphereGeometry args={[.038,12,12]} /><meshBasicMaterial color="#ffdd58" /></mesh>
-    <mesh position={[-.54,.63,.33]} rotation={[0,0,.5]}><coneGeometry args={[.07,.36,5]} /><meshStandardMaterial color="#b9edff" metalness={.7} roughness={.18} /></mesh>
-    <mesh position={[-.31,.75,.34]} rotation={[0,0,-.4]}><coneGeometry args={[.065,.31,5]} /><meshStandardMaterial color="#b9edff" metalness={.7} roughness={.18} /></mesh>
+function drawFallback(canvas: HTMLCanvasElement, name: string, color: string) {
+  const ctx = canvas.getContext('2d')!; ctx.clearRect(0, 0, 512, 512); ctx.fillStyle = color; ctx.fillRect(0, 0, 512, 512);
+  ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '800 210px sans-serif'; ctx.fillText(Array.from(name.trim()).slice(0, 2).join('') || 'CB', 256, 265);
+}
+
+function useEmblemTexture({ teamName, logoUrl, primaryColor }: Props) {
+  const canvas = useMemo(() => { const el = document.createElement('canvas'); el.width = 512; el.height = 512; return el; }, []);
+  const texture = useMemo(() => { const value = new THREE.CanvasTexture(canvas); value.colorSpace = THREE.SRGBColorSpace; return value; }, [canvas]);
+  useEffect(() => {
+    drawFallback(canvas, teamName, primaryColor); texture.needsUpdate = true;
+    if (!logoUrl) return;
+    const image = new Image(); image.onload = () => { const ctx = canvas.getContext('2d')!; ctx.clearRect(0, 0, 512, 512); ctx.save(); ctx.beginPath(); ctx.arc(256, 256, 252, 0, Math.PI * 2); ctx.clip(); const scale = Math.max(512 / image.width, 512 / image.height); const w = image.width * scale, h = image.height * scale; ctx.drawImage(image, (512 - w) / 2, (512 - h) / 2, w, h); ctx.restore(); texture.needsUpdate = true; }; image.src = logoUrl;
+  }, [canvas, logoUrl, primaryColor, teamName, texture]);
+  useEffect(() => () => texture.dispose(), [texture]); return texture;
+}
+
+function Artifact(props: Props) {
+  const group = useRef<THREE.Group>(null); const ribbonA = useRef<THREE.Mesh>(null); const ribbonB = useRef<THREE.Mesh>(null); const { pointer } = useThree(); const texture = useEmblemTexture(props);
+  useFrame(({ clock }, delta) => { if (!group.current || !ribbonA.current || !ribbonB.current) return; group.current.rotation.y = THREE.MathUtils.damp(group.current.rotation.y, pointer.x * .18, 3.2, delta); group.current.rotation.x = THREE.MathUtils.damp(group.current.rotation.x, -.04 - pointer.y * .08, 3.2, delta); group.current.position.y = Math.sin(clock.elapsedTime * .75) * .035; ribbonA.current.rotation.z += delta * .04; ribbonB.current.rotation.z -= delta * .03; });
+  return <group ref={group} rotation={[-.04, -.12, 0]}>
+    <mesh position={[0, -.05, -.22]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[1.32, 1.32, .22, 64]} /><meshPhysicalMaterial color="#fff8f5" metalness={.05} roughness={.18} clearcoat={1} /></mesh>
+    <mesh position={[0, -.05, -.08]}><circleGeometry args={[1.18, 64]} /><meshPhysicalMaterial color="#ffc2dc" transparent opacity={.38} transmission={.35} thickness={.7} roughness={.12} /></mesh>
+    <mesh position={[0, -.05, .02]}><ringGeometry args={[.84, .96, 64]} /><meshBasicMaterial color="#ffffff" transparent opacity={.9} /></mesh>
+    <mesh position={[0, -.05, .05]}><circleGeometry args={[.82, 64]} /><meshBasicMaterial map={texture} toneMapped={false} /></mesh>
+    <mesh ref={ribbonA} rotation={[1.12, .18, -.2]}><torusGeometry args={[1.5, .055, 14, 96]} /><meshPhysicalMaterial color="#f52a9a" transparent opacity={.5} transmission={.3} roughness={.1} /></mesh>
+    <mesh ref={ribbonB} rotation={[1.42, -.25, .64]}><torusGeometry args={[1.62, .035, 12, 96]} /><meshPhysicalMaterial color="#ffc85a" transparent opacity={.7} transmission={.25} roughness={.12} /></mesh>
   </group>;
 }
 
-function Crest() {
-  const root = useRef<THREE.Group>(null), ring = useRef<THREE.Mesh>(null);
-  const { pointer } = useThree();
-  useFrame(({ clock },delta) => {
-    if(!root.current||!ring.current)return;
-    root.current.rotation.y=THREE.MathUtils.damp(root.current.rotation.y,pointer.x*.28,3.5,delta);
-    root.current.rotation.x=THREE.MathUtils.damp(root.current.rotation.x,-.05-pointer.y*.12,3.5,delta);
-    root.current.position.y=Math.sin(clock.elapsedTime*.9)*.045;
-    ring.current.rotation.z+=delta*.12;
-  });
-  return <group ref={root} rotation={[-.05,-.18,0]} scale={1.16}>
-    <mesh position={[0,0,-.18]} scale={[1,1.12,.22]}><cylinderGeometry args={[1.12,1.12,.28,6]} /><meshStandardMaterial color="#071b2b" metalness={.86} roughness={.2} /></mesh>
-    <mesh position={[0,0,-.01]} scale={[1,1.12,.15]}><cylinderGeometry args={[.98,.98,.18,6]} /><meshPhysicalMaterial color="#0c64a2" metalness={.75} roughness={.14} clearcoat={1} /></mesh>
-    <mesh position={[0,0,.11]} scale={[1,1.12,1]}><ringGeometry args={[.79,.84,6]} /><meshStandardMaterial color="#82e7ff" emissive="#138fc5" emissiveIntensity={1.4} metalness={.55} roughness={.14} /></mesh>
-    <DragonStroke />
-    <mesh ref={ring} rotation={[1.12,.12,.18]}><torusGeometry args={[1.42,.018,8,96]} /><meshBasicMaterial color="#7de7ff" transparent opacity={.55} /></mesh>
-    {[0,1,2].map(i=><mesh key={i} position={[Math.cos(i*2.094)*1.42,Math.sin(i*2.094)*.62,.5]}><sphereGeometry args={[.035,10,10]} /><meshBasicMaterial color={i===1?'#ff755d':'#a8efff'} /></mesh>)}
-  </group>;
-}
-
-function Scene(){
-  return <><fog attach="fog" args={['#071722',4.8,8]} /><ambientLight intensity={.72} /><directionalLight position={[3,4,5]} intensity={4.2} color="#d9f8ff" /><pointLight position={[-3,-1,2]} intensity={6} color="#1a88da" /><pointLight position={[3,1,3]} intensity={4} color="#ff6d43" /><Crest /><points><bufferGeometry><bufferAttribute attach="attributes-position" args={[PARTICLES,3]} /></bufferGeometry><pointsMaterial size={.025} color="#8bdff4" transparent opacity={.5} sizeAttenuation /></points></>;
-}
-
-export default function TeamArtifact(){return <Canvas dpr={[1,1.55]} camera={{position:[0,0,4.5],fov:35}} gl={{antialias:true,alpha:true,powerPreference:'high-performance'}}><Scene /></Canvas>}
+function Scene(props: Props) { return <><ambientLight intensity={2.6} /><directionalLight position={[3, 4, 5]} intensity={3} color="#fffaf2" /><pointLight position={[-3, 0, 3]} intensity={4} color="#f52a9a" /><pointLight position={[3, -1, 2]} intensity={3} color="#ffc85a" /><Artifact {...props} /></>; }
+export default function TeamArtifact(props: Props) { return <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 4.8], fov: 34 }} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}><Scene {...props} /></Canvas>; }
