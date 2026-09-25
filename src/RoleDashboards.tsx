@@ -21,9 +21,12 @@ import { supabase } from "./lib/supabase/client";
 import {
   AD_BANNER_HEIGHT,
   AD_BANNER_WIDTH,
+  getAdminTeams,
   getBoothAds,
+  getBoothCurrencyLeaderboard,
   getBoothQueue,
   getBoothRatingSummary,
+  getPersonalLeaderboard,
   purchaseBoothAd,
   readImageDimensions,
   subscribeToBoothOperations,
@@ -458,6 +461,26 @@ export function AdminDashboard() {
     reports: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [topTeams, setTopTeams] = useState<Tables<"teams">[]>([]);
+  const [topPersonal, setTopPersonal] = useState<
+    Awaited<ReturnType<typeof getPersonalLeaderboard>>
+  >([]);
+  const [topBooths, setTopBooths] = useState<
+    Awaited<ReturnType<typeof getBoothCurrencyLeaderboard>>
+  >([]);
+  useEffect(() => {
+    const festivalId = activeMembership?.festival_id;
+    if (!festivalId) return;
+    void Promise.all([
+      getAdminTeams(festivalId),
+      getPersonalLeaderboard(festivalId),
+      getBoothCurrencyLeaderboard(festivalId),
+    ]).then(([teamRows, personalRows, boothRows]) => {
+      setTopTeams([...teamRows].sort((a, b) => b.score - a.score).slice(0, 3));
+      setTopPersonal(personalRows.slice(0, 3));
+      setTopBooths(boothRows.slice(0, 3));
+    });
+  }, [activeMembership?.festival_id]);
   useEffect(() => {
     const festivalId = activeMembership?.festival_id;
     if (!supabase || !festivalId) return;
@@ -523,6 +546,71 @@ export function AdminDashboard() {
           <strong>{counts.reports}</strong>
           <p>처리할 신고</p>
         </Link>
+      </section>
+      <section className="ad-card admin-ranking-preview">
+        <div className="ad-card-head">
+          <Trophy />
+          <div>
+            <b>랭킹 미리보기</b>
+            <small>팀, 개인, 부스 인기 순위 각 1~3위입니다.</small>
+          </div>
+          <Link className="secondary-action" to="/admin/rankings">
+            전체 보기 <ArrowRight />
+          </Link>
+        </div>
+        <div className="hero-rankings">
+          <div>
+            <span>팀</span>
+            <ol>
+              {topTeams.map((team, index) => (
+                <li key={team.id} className={`rank-${index + 1}`}>
+                  <em>{index + 1}</em>
+                  {team.logo_url ? (
+                    <img src={team.logo_url} alt="" />
+                  ) : (
+                    <i style={{ backgroundColor: team.primary_color }} />
+                  )}
+                  <b>{team.name}</b>
+                </li>
+              ))}
+              {topTeams.length === 0 && <li className="empty">-</li>}
+            </ol>
+          </div>
+          <div>
+            <span>개인</span>
+            <ol>
+              {topPersonal.map((row, index) => (
+                <li key={row.user_id} className={`rank-${index + 1}`}>
+                  <em>{index + 1}</em>
+                  {row.avatar_url ? (
+                    <img src={row.avatar_url} alt="" />
+                  ) : (
+                    <i className="fallback">{row.display_name.slice(0, 1)}</i>
+                  )}
+                  <b>{row.display_name}</b>
+                </li>
+              ))}
+              {topPersonal.length === 0 && <li className="empty">-</li>}
+            </ol>
+          </div>
+          <div>
+            <span>부스</span>
+            <ol>
+              {topBooths.map((booth, index) => (
+                <li key={booth.id} className={`rank-${index + 1}`}>
+                  <em>{index + 1}</em>
+                  {booth.logo_url ? (
+                    <img src={booth.logo_url} alt="" />
+                  ) : (
+                    <i style={{ backgroundColor: booth.accent_color }} />
+                  )}
+                  <b>{booth.name}</b>
+                </li>
+              ))}
+              {topBooths.length === 0 && <li className="empty">-</li>}
+            </ol>
+          </div>
+        </div>
       </section>
       <section className="workspace-actions">
         <Link className="work-panel operation-link" to="/admin/categories">

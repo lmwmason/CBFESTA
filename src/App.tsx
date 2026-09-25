@@ -238,9 +238,14 @@ export default function App() {
                 <span>팀</span>
                 <ol>
                   {(catalog?.teams ?? []).slice(0, 3).map((team, index) => (
-                    <li key={team.id}>
+                    <li key={team.id} className={`rank-${index + 1}`}>
                       <em>{index + 1}</em>
-                      {team.name}
+                      {team.logo_url ? (
+                        <img src={team.logo_url} alt="" />
+                      ) : (
+                        <i style={{ backgroundColor: team.primary_color }} />
+                      )}
+                      <b>{team.name}</b>
                     </li>
                   ))}
                   {(catalog?.teams ?? []).length === 0 && <li className="empty">-</li>}
@@ -250,9 +255,16 @@ export default function App() {
                 <span>개인</span>
                 <ol>
                   {personal.slice(0, 3).map((row, index) => (
-                    <li key={row.user_id}>
+                    <li key={row.user_id} className={`rank-${index + 1}`}>
                       <em>{index + 1}</em>
-                      {row.display_name}
+                      {row.avatar_url ? (
+                        <img src={row.avatar_url} alt="" />
+                      ) : (
+                        <i className="fallback">
+                          {row.display_name.slice(0, 1)}
+                        </i>
+                      )}
+                      <b>{row.display_name}</b>
                     </li>
                   ))}
                   {personal.length === 0 && <li className="empty">-</li>}
@@ -262,9 +274,14 @@ export default function App() {
                 <span>부스</span>
                 <ol>
                   {boothBoard.slice(0, 3).map((booth, index) => (
-                    <li key={booth.id}>
+                    <li key={booth.id} className={`rank-${index + 1}`}>
                       <em>{index + 1}</em>
-                      {booth.name}
+                      {booth.logo_url ? (
+                        <img src={booth.logo_url} alt="" />
+                      ) : (
+                        <i style={{ backgroundColor: booth.accent_color }} />
+                      )}
+                      <b>{booth.name}</b>
                     </li>
                   ))}
                   {boothBoard.length === 0 && <li className="empty">-</li>}

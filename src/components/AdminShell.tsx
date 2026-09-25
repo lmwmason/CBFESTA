@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import {
+  Award,
   CalendarDays,
   ClipboardCheck,
   LayoutDashboard,
@@ -22,6 +23,7 @@ const links = [
   { to: "/admin/schedule", label: "일정", icon: CalendarDays, end: false },
   { to: "/admin/announcements", label: "공지", icon: Megaphone, end: false },
   { to: "/admin/teams", label: "팀", icon: Trophy, end: false },
+  { to: "/admin/rankings", label: "랭킹", icon: Award, end: false },
   { to: "/admin/permissions", label: "권한", icon: Users, end: false },
   { to: "/admin/issues", label: "신고·이슈", icon: ClipboardCheck, end: false },
 ];

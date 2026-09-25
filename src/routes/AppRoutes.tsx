@@ -68,6 +68,7 @@ import { BoothSettingsPage } from "../features/booth/BoothSettingsPage";
 import { BoothQueuePage } from "../features/booth/BoothQueuePage";
 import { BoothInventoryPage } from "../features/booth/BoothInventoryPage";
 import { AdminIssuesPage } from "../features/admin/AdminIssuesPage";
+import { AdminRankingsPage } from "../features/admin/AdminRankingsPage";
 import {
   AdminTeamsPage,
   EditTeamPage,
@@ -1246,6 +1247,14 @@ export function AppRoutes({ home }: { home: ReactNode }) {
         element={
           <RoleRoute allow={["owner", "admin"]}>
             <AdminShell><EditTeamPage /></AdminShell>
+          </RoleRoute>
+        }
+      />
+      <Route
+        path="/admin/rankings"
+        element={
+          <RoleRoute allow={["owner", "admin", "staff"]}>
+            <AdminShell><AdminRankingsPage /></AdminShell>
           </RoleRoute>
         }
       />
