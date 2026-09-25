@@ -1,14 +1,7 @@
 import { CalendarDays, Home, QrCode, ShieldCheck, Store } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../features/auth/auth-context";
-
-function roleRoute(role?: string) {
-  return role === "booth_operator"
-    ? "/booth"
-    : ["owner", "admin", "staff"].includes(role ?? "")
-      ? "/admin"
-      : "/teams";
-}
+import { roleRoute } from "../lib/roleRoute";
 
 export function MobileNav() {
   const { user, activeMembership } = useAuth();

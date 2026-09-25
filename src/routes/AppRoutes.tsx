@@ -7,6 +7,7 @@ import {
   ChevronRight,
   MapPin,
   Search,
+  Store,
   Users,
 } from "lucide-react";
 import {
@@ -58,6 +59,8 @@ import {
   NewTeamPage,
 } from "../features/admin/AdminTeamsPage";
 import { AdminFestivalSettingsPage } from "../features/admin/AdminFestivalSettingsPage";
+import { getCategoryIcon, getKindIcon } from "../lib/categoryIcons";
+import { roleRoute } from "../lib/roleRoute";
 import { ReportForm } from "../features/reports/ReportSheet";
 import { AdminShell } from "../components/AdminShell";
 import { BoothShell } from "../components/BoothShell";
@@ -65,6 +68,7 @@ import { useAuth, type FestivalRole } from "../features/auth/auth-context";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
 function Header() {
+  const { user, activeMembership } = useAuth();
   return (
     <header className="route-header">
       <Link to="/">
@@ -80,7 +84,9 @@ function Header() {
         <Link to="/teams">TEAMS</Link>
         <Link to="/map">MAP</Link>
         <Link to="/report">REPORT</Link>
-        <Link to="/login">ACCOUNT</Link>
+        <Link to={user ? roleRoute(activeMembership?.role) : "/login"}>
+          {user ? "MY SPACE" : "ACCOUNT"}
+        </Link>
       </nav>
     </header>
   );
@@ -251,28 +257,33 @@ function SchedulePage() {
           />
         </label>
         <section className="listing-grid">
-          {programs.map((item) => (
-            <Link to={`/programs/${item.id}`} key={item.id}>
-              <div
-                className="listing-thumb"
-                style={{
-                  backgroundColor:
-                    catalog?.categories?.find(
-                      (category) => category.id === item.category_id,
-                    )?.color ?? "#f0e4e9",
-                }}
-              >
-                <b>{item.kind.toUpperCase()}</b>
-              </div>
-              <small>
-                {catalog?.categories?.find(
-                  (category) => category.id === item.category_id,
-                )?.name ?? item.kind}
-              </small>
-              <h2>{item.title}</h2>
-              <p>{item.description ?? "상세 정보 보기"}</p>
-            </Link>
-          ))}
+          {programs.map((item) => {
+            const category = catalog?.categories?.find(
+              (candidate) => candidate.id === item.category_id,
+            );
+            const KindIcon = getKindIcon(item.kind);
+            return (
+              <Link to={`/schedule/${item.id}`} key={item.id}>
+                <div
+                  className="listing-thumb"
+                  style={
+                    item.cover_url
+                      ? {
+                          backgroundImage: `url(${item.cover_url})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }
+                      : { backgroundColor: category?.color ?? "#f0e4e9" }
+                  }
+                >
+                  {!item.cover_url && <KindIcon />}
+                </div>
+                <small>{category?.name ?? item.kind}</small>
+                <h2>{item.title}</h2>
+                <p>{item.description ?? "상세 정보 보기"}</p>
+              </Link>
+            );
+          })}
           {programs.length === 0 && (
             <div className="catalog-empty">
               <CalendarDays />
@@ -394,17 +405,25 @@ function BoothsPage() {
           <p>현재 공개된 부스와 운영 상태입니다.</p>
         </header>
         <section className="booth-list">
-          {(catalog?.booths ?? []).map((booth) => (
-            <Link to={`/booths/${booth.id}`} key={booth.id}>
-              <i style={{ backgroundColor: booth.accent_color }} />
-              <span>
-                <b>{booth.name}</b>
-                <small>{booth.location ?? "위치 준비 중"}</small>
-              </span>
-              <em>{booth.status}</em>
-              <ChevronRight />
-            </Link>
-          ))}
+          {(catalog?.booths ?? []).map((booth) => {
+            const category = catalog?.categories?.find(
+              (candidate) => candidate.id === booth.category_id,
+            );
+            const CategoryIcon = getCategoryIcon(category?.code);
+            return (
+              <Link to={`/booths/${booth.id}`} key={booth.id}>
+                <i style={{ backgroundColor: booth.accent_color }}>
+                  <CategoryIcon />
+                </i>
+                <span>
+                  <b>{booth.name}</b>
+                  <small>{booth.location ?? "위치 준비 중"}</small>
+                </span>
+                <em>{booth.status}</em>
+                <ChevronRight />
+              </Link>
+            );
+          })}
           {!(catalog?.booths ?? []).length && (
             <div className="catalog-empty">
               <MapPin />
@@ -500,8 +519,18 @@ function BoothDetailPage() {
       <Header />
       <main className="detail-page">
         <PageBack fallback="/booths" label="부스 목록" />
+        {booth.cover_url && (
+          <img className="booth-cover-image" src={booth.cover_url} alt="" />
+        )}
         <span>{booth.status.toUpperCase()}</span>
-        <h1>{booth.name}</h1>
+        <h1>
+          {booth.logo_url ? (
+            <img className="booth-logo-inline" src={booth.logo_url} alt="" />
+          ) : (
+            <Store className="booth-logo-inline booth-logo-fallback" />
+          )}
+          {booth.name}
+        </h1>
         <p>
           {booth.description ?? booth.short_description ?? "상세 설명이 아직 등록되지 않았습니다."}
         </p>

@@ -17,6 +17,8 @@ import {
   subscribeToFestival,
 } from "./lib/supabase/services";
 import { useAuth } from "./features/auth/auth-context";
+import { getCategoryIcon } from "./lib/categoryIcons";
+import { roleRoute } from "./lib/roleRoute";
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
 function Brand() {
@@ -38,14 +40,6 @@ function formatDate(value: string | null) {
       }).format(new Date(value))
     : "축제 준비 중";
 }
-function roleRoute(role: string | undefined) {
-  return role === "booth_operator"
-    ? "/booth"
-    : ["owner", "admin", "staff"].includes(role ?? "")
-      ? "/admin"
-      : "/teams";
-}
-
 export default function App() {
   const auth = useAuth();
   const [festival, setFestival] = useState<Tables<"festivals"> | null>(null);
@@ -265,14 +259,27 @@ export default function App() {
                 >
                   <div
                     className="program-cover"
-                    style={{
-                      backgroundColor:
-                        catalog?.categories?.find(
-                          (category) => category.id === booth.category_id,
-                        )?.color ?? "#f0e4e9",
-                    }}
+                    style={
+                      booth.cover_url
+                        ? { backgroundImage: `url(${booth.cover_url})` }
+                        : {
+                            backgroundColor:
+                              catalog?.categories?.find(
+                                (category) => category.id === booth.category_id,
+                              )?.color ?? "#f0e4e9",
+                          }
+                    }
                   >
                     <span>BOOTH</span>
+                    {!booth.cover_url &&
+                      (() => {
+                        const CategoryIcon = getCategoryIcon(
+                          catalog?.categories?.find(
+                            (category) => category.id === booth.category_id,
+                          )?.code,
+                        );
+                        return <CategoryIcon />;
+                      })()}
                     <b>{booth.status.toUpperCase()}</b>
                   </div>
                   <small>
