@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import QRCode from "qrcode";
-import { CheckCircle2, MonitorUp, QrCode, RefreshCw } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { CheckCircle2, MonitorUp, QrCode, RefreshCw, Store } from "lucide-react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { Tables } from "../../lib/supabase/database.types";
 import { supabase } from "../../lib/supabase/client";
 import { createQr, redeemQr } from "../../lib/supabase/services";
@@ -67,34 +67,69 @@ export function BoothDisplaySetupPage() {
 }
 
 export function BoothDisplayPage() {
+  const { boothId } = useParams();
   const [params] = useSearchParams();
   const code = params.get("code");
   const [image, setImage] = useState("");
+  const [booth, setBooth] = useState<Tables<"booths"> | null>(null);
+
   useEffect(() => {
     if (!code) return;
     void QRCode.toDataURL(
       `${window.location.origin}/check-in?code=${encodeURIComponent(code)}`,
-      { width: 720, margin: 2, errorCorrectionLevel: "M" },
+      {
+        width: 640,
+        margin: 1,
+        errorCorrectionLevel: "M",
+        color: { dark: "#121212", light: "#00000000" },
+      },
     ).then(setImage);
   }, [code]);
+
+  useEffect(() => {
+    const id = Number(boothId);
+    if (!supabase || Number.isNaN(id)) return;
+    void supabase
+      .from("booths")
+      .select("*")
+      .eq("id", id)
+      .single()
+      .then(({ data }) => setBooth(data));
+  }, [boothId]);
+
   if (!code)
     return (
       <main className="display-screen">
         <h1>유효하지 않은 QR 화면입니다.</h1>
       </main>
     );
+  const accent = booth?.accent_color ?? "#121212";
   return (
-    <main className="display-screen">
+    <main
+      className="display-screen"
+      style={{ "--display-accent": accent } as CSSProperties}
+    >
       <header>
-        <span>CBFESTA</span>
+        <span className="display-screen-booth">
+          {booth?.logo_url ? (
+            <img src={booth.logo_url} alt="" />
+          ) : (
+            <i style={{ backgroundColor: accent }}>
+              <Store />
+            </i>
+          )}
+          {booth?.name ?? "CBFESTA"}
+        </span>
         <b>BOOTH CHECK-IN</b>
       </header>
       <section>
-        {image ? (
-          <img src={image} alt="학생 인증 QR 코드" />
-        ) : (
-          <RefreshCw className="spin" />
-        )}
+        <div className="display-qr-frame">
+          {image ? (
+            <img src={image} alt="학생 인증 QR 코드" />
+          ) : (
+            <RefreshCw className="spin" />
+          )}
+        </div>
         <h1>
           QR을 스캔해
           <br />
@@ -102,6 +137,7 @@ export function BoothDisplayPage() {
         </h1>
         <p>로그인 후 자동으로 체크인됩니다.</p>
       </section>
+      <footer>CBFESTA</footer>
     </main>
   );
 }

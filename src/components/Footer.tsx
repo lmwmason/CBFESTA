@@ -13,8 +13,8 @@ export function Footer() {
       <div className="site-footer-credit">
         <img src={developerLogo} alt="" />
         <span>
-          <b>Built by MUWON LEE</b>
-          <small>충북과학고등학교 · CBSH 37th</small>
+          <b>just_grassy</b>
+          <small>CBSH 37th · © just_grassy {new Date().getFullYear()}</small>
         </span>
       </div>
       <nav className="site-footer-links">
