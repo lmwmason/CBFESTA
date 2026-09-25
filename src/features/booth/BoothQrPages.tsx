@@ -1,5 +1,7 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import QRCode from "qrcode";
+import QrScanner from "qr-scanner";
+import qrScannerWorkerPath from "qr-scanner/qr-scanner-worker.min.js?url";
 import { CheckCircle2, MonitorUp, QrCode, RefreshCw, Store } from "lucide-react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import type { Tables } from "../../lib/supabase/database.types";
@@ -144,13 +146,50 @@ export function BoothDisplayPage() {
 
 export function StudentCheckinPage() {
   const { user } = useAuth();
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
-  const code = params.get("code");
+  const [code, setCode] = useState(() => params.get("code"));
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const scannerRef = useRef<QrScanner | null>(null);
   const [state, setState] = useState<"idle" | "checking" | "done" | "error">(
     "idle",
   );
   const [message, setMessage] = useState("");
+  useEffect(() => {
+    QrScanner.WORKER_PATH = qrScannerWorkerPath;
+    if (code || state !== "idle" || !videoRef.current) return;
+    const scanner = new QrScanner(
+      videoRef.current,
+      ({ data }) => {
+        try {
+          const scannedUrl = new URL(data);
+          const scannedCode = scannedUrl.searchParams.get("code");
+          if (scannedUrl.pathname !== "/check-in" || !scannedCode) {
+            setMessage("CBFESTA 체크인 QR이 아닙니다.");
+            return;
+          }
+          setCode(scannedCode);
+          setParams({ code: scannedCode }, { replace: true });
+        } catch {
+          setMessage("CBFESTA 체크인 QR이 아닙니다.");
+        }
+      },
+      {
+        preferredCamera: "environment",
+        highlightScanRegion: true,
+        highlightCodeOutline: true,
+        onDecodeError: () => undefined,
+      },
+    );
+    scannerRef.current = scanner;
+    void scanner.start().catch(() => {
+      setMessage("카메라를 사용할 수 없습니다. 브라우저 권한을 확인해주세요.");
+    });
+    return () => {
+      scanner.destroy();
+      scannerRef.current = null;
+    };
+  }, [code, setParams, state]);
   const checkin = async () => {
     if (!code) return;
     if (!user) {
@@ -175,11 +214,23 @@ export function StudentCheckinPage() {
   };
   return (
     <main className="student-checkin">
-      <QrCode />
+      {!code && state === "idle" && (
+        <div className="checkin-scanner">
+          <video ref={videoRef} muted playsInline />
+          <QrCode aria-hidden="true" />
+        </div>
+      )}
+      {code && <QrCode />}
       <span>CHECK-IN</span>
-      <h1>{state === "done" ? "완료됐어요!" : "참여를 인증할까요?"}</h1>
-      <p>{message || "부스 QR을 통해 현장 참여를 기록합니다."}</p>
-      {state === "idle" && (
+      <h1>
+        {state === "done"
+          ? "완료됐어요!"
+          : code
+            ? "참여를 인증할까요?"
+            : "QR을 스캔해주세요."}
+      </h1>
+      <p>{message || "부스 화면의 QR을 카메라로 비춰주세요."}</p>
+      {state === "idle" && code && (
         <button className="primary-action" onClick={() => void checkin()}>
           <CheckCircle2 /> 인증하기
         </button>
