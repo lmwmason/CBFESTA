@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type WheelEvent,
 } from "react";
 import { ArrowRight, CalendarDays, LogIn, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -120,10 +121,12 @@ function Reveal({
 // viewport center and holds there; reverses smoothly if scrolled back up.
 function useScrollScrub<T extends HTMLElement>() {
   const ref = useRef<T>(null);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(() =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : 0,
+  );
   useEffect(() => {
     const node = ref.current;
-    if (!node) return;
+    if (!node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let raf = 0;
     const update = () => {
       raf = 0;
@@ -148,6 +151,17 @@ function useScrollScrub<T extends HTMLElement>() {
   return [ref, progress] as const;
 }
 
+function handleReelWheel(e: WheelEvent<HTMLDivElement>) {
+  const el = e.currentTarget;
+  if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return;
+  const canScrollRight = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+  const canScrollLeft = el.scrollLeft > 0;
+  if ((e.deltaY > 0 && canScrollRight) || (e.deltaY < 0 && canScrollLeft)) {
+    e.preventDefault();
+    el.scrollLeft += e.deltaY;
+  }
+}
+
 function ScrubFrame({ children }: { children: ReactNode }) {
   const [ref, progress] = useScrollScrub<HTMLDivElement>();
   const eased = progress * progress * (3 - 2 * progress);
@@ -157,7 +171,8 @@ function ScrubFrame({ children }: { children: ReactNode }) {
       className="launch-scrub-frame"
       style={{
         opacity: 0.25 + eased * 0.75,
-        transform: `scale(${0.86 + eased * 0.14}) translateY(${(1 - eased) * 36}px)`,
+        transform: `perspective(1200px) rotateX(${(1 - eased) * 6}deg) scale(${0.86 + eased * 0.14}) translateY(${(1 - eased) * 36}px)`,
+        willChange: "transform, opacity",
       }}
     >
       {children}
@@ -166,9 +181,16 @@ function ScrubFrame({ children }: { children: ReactNode }) {
 }
 
 function LaunchPage({ user }: { user: User | null }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   return (
     <div className="launch-page">
-      <header className="header launch-header">
+      <header className={`header launch-header ${scrolled ? "is-scrolled" : ""}`}>
         <Link className="launch-header-mark" to="/">
           CBFESTA
         </Link>
@@ -299,19 +321,22 @@ function LaunchPage({ user }: { user: User | null }) {
             <span>지난 사름제</span>
             <h2>사름제가 걸어온 순간들</h2>
           </div>
-          <div className="launch-video-grid">
-            {HIGHLIGHT_VIDEOS.map((videoId) => (
-              <div className="launch-video" key={videoId}>
-                <iframe
-                  src={`https://www.youtube.com/embed/${videoId}`}
-                  title="사름제 하이라이트 영상"
-                  loading="lazy"
-                  referrerPolicy="strict-origin-when-cross-origin"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                />
-              </div>
-            ))}
+          <div className="launch-video-reel">
+            <div className="launch-video-grid" onWheel={handleReelWheel}>
+              {HIGHLIGHT_VIDEOS.map((videoId, index) => (
+                <div className="launch-video" key={videoId}>
+                  <iframe
+                    src={`https://www.youtube.com/embed/${videoId}`}
+                    title={`사름제 하이라이트 영상 ${index + 1}`}
+                    loading="lazy"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="launch-video-reel-fade" aria-hidden="true" />
           </div>
         </Reveal>
 
