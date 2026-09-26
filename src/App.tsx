@@ -111,7 +111,7 @@ function Reveal({
           observer.disconnect();
         }
       },
-      { threshold: 0.2 },
+      { threshold: 0.15 },
     );
     observer.observe(node);
     return () => observer.disconnect();
@@ -130,7 +130,7 @@ function Reveal({
 function LaunchPage({ user }: { user: User | null }) {
   return (
     <div className="launch-page">
-      <header className="header">
+      <header className="header launch-header">
         <Brand />
         <div className="header-tools">
           <Link className="login-button" to="/login">
@@ -139,25 +139,34 @@ function LaunchPage({ user }: { user: User | null }) {
         </div>
       </header>
       <main className="launch-main">
-        <Reveal className="launch-hero">
-          <span>FESTIVAL OPERATIONS PLATFORM</span>
-          <h1>
-            부스도, 줄도, 랭킹도.
-            <br />
-            축제의 모든 순간을 하나로.
-          </h1>
-          <p>
-            CBFESTA는 학교 축제를 운영하는 오픈소스 플랫폼이에요. 학생은 부스를
-            찾고 줄을 서고 랭킹을 확인하고, 부스 운영자는 현장을 관리하고,
-            관리자는 축제 전체를 한 화면에서 통제해요.
-          </p>
-          <div className="launch-hero-actions">
-            <Link className="primary-action" to="/login">
-              <LogIn /> 로그인하고 둘러보기
-            </Link>
-            <span className="launch-hero-note">지금은 사름제-2026을 준비하고 있어요.</span>
+        <section className="launch-hero">
+          <div className="launch-hero-copy">
+            <span className="launch-hero-eyebrow">FESTIVAL OPERATIONS PLATFORM</span>
+            <h1>
+              <span className="launch-hero-line" style={{ animationDelay: "80ms" }}>
+                부스도, 줄도, 랭킹도.
+              </span>
+              <span className="launch-hero-line" style={{ animationDelay: "220ms" }}>
+                축제의 모든 순간을 하나로.
+              </span>
+            </h1>
+            <p className="launch-hero-fade" style={{ animationDelay: "420ms" }}>
+              CBFESTA는 학교 축제를 운영하는 오픈소스 플랫폼이에요. 학생은 부스를
+              찾고 줄을 서고 랭킹을 확인하고, 부스 운영자는 현장을 관리하고,
+              관리자는 축제 전체를 한 화면에서 통제해요.
+            </p>
+            <div
+              className="launch-hero-actions launch-hero-fade"
+              style={{ animationDelay: "540ms" }}
+            >
+              <Link className="primary-action" to="/login">
+                <LogIn /> 로그인하고 둘러보기
+              </Link>
+              <span className="launch-hero-note">지금은 사름제-2026을 준비하고 있어요.</span>
+            </div>
           </div>
-        </Reveal>
+          <div className="launch-hero-scroll-cue" aria-hidden="true" />
+        </section>
 
         {FEATURE_SECTIONS.map((feature, index) => (
           <Reveal
@@ -200,7 +209,7 @@ function LaunchPage({ user }: { user: User | null }) {
         <Reveal className="launch-highlights">
           <div className="launch-highlights-head">
             <span>지난 사름제</span>
-            <h2>이 플랫폼으로 열렸던 축제들</h2>
+            <h2>사름제가 걸어온 순간들</h2>
           </div>
           <div className="launch-video-grid">
             {HIGHLIGHT_VIDEOS.map((videoId) => (

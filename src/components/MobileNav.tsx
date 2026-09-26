@@ -7,6 +7,7 @@ export function MobileNav() {
   const { user, activeMembership } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  if (!user && location.pathname === "/") return null;
   const accountTarget = user ? roleRoute(activeMembership?.role) : "/login";
   const leading = [
     { icon: Home, label: "홈", to: "/" },
