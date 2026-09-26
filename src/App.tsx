@@ -11,9 +11,13 @@ import { ArrowRight, CalendarDays, LogIn, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
 import heroDevice from "./assets/launch/hero-device-3d.webp";
-import fieldControl from "./assets/launch/field-control-app.webp";
-import fieldQr from "./assets/launch/field-qr-app.webp";
-import fieldBoothStatus from "./assets/launch/field-booth-status-app.webp";
+import deviceSchedule from "./assets/launch/device-schedule.webp";
+import deviceRanking from "./assets/launch/device-ranking.webp";
+import adminDashboard from "./assets/launch/admin-dashboard.webp";
+import boothDashboard from "./assets/launch/booth-dashboard.webp";
+import fieldControl from "./assets/launch/field-control-recreated.webp";
+import fieldQr from "./assets/launch/field-qr-recreated.webp";
+import fieldBoothStatus from "./assets/launch/field-booth-status-recreated.webp";
 import type { Tables } from "./lib/supabase/database.types";
 import {
   getActiveBoothAds,
@@ -35,12 +39,15 @@ const HIGHLIGHT_VIDEOS = ["sEYQhS_GXsc", "TaY_Dk2yrqQ", "hETNL9O-Lng", "l31U7ixI
 const FEATURE_SECTIONS = [
   {
     image: fieldQr,
+    type: "field",
   },
   {
     image: fieldControl,
+    type: "field",
   },
   {
     image: fieldBoothStatus,
+    type: "field",
   },
 ];
 
@@ -55,6 +62,7 @@ const LAUNCH_COPY = {
     heroAction: "로그인하고 둘러보기", heroNote: "지금은 사름제-2026을 준비하고 있어요.",
     productEyebrow: "모두가 같은 축제를 봐요", productTitle: ["축제 전체가,", "하나의 화면으로."],
     productBody: "학생에게는 가장 편한 축제 앱으로, 운영진에게는 가장 믿을 수 있는 현장 시스템으로.",
+    appEyebrow: "손안의 축제", appTitle: ["보고 싶은 축제를,", "바로 꺼내 보세요."], appBody: "부스, 일정, 랭킹. 필요한 순간에 필요한 정보가 앱 안에 있어요.",
     features: [
       ["학생", "부스와 공연, 대기열을 실시간으로 보고 방문한 부스와 미션 기록도 앱에서 바로 확인해요."],
       ["축제 운영진", "전체 공지부터 공연 일정, 부스 상황까지 수정하는 즉시 축제 전체 화면에 반영해요."],
@@ -63,6 +71,7 @@ const LAUNCH_COPY = {
     controlEyebrow: "축제 상황판", controlTitle: ["모니터 하나면,", "현장이 보입니다."],
     controlBody: "공지, 공연, 대기열, 부스 상태, QR 체크인까지. 운영진은 필요한 정보를 한 화면에서 관리하고, 바뀐 내용은 학생 앱과 부스 화면에 바로 닿아요.",
     controlItems: "공지 · 일정 · 대기열 · 부스 상태", controlQR: "QR 체크인 화면으로 바로 띄우기",
+    workspaceEyebrow: "운영자를 위한 화면", workspaceTitle: "현장은 빠르게, 관리는 차분하게.", workspaceBody: "관리자와 부스 운영자는 지금 필요한 정보를 한곳에서 확인하고 바로 처리해요.", adminLabel: "축제 관리자", adminDetail: "전체 축제의 일정, 공지, 부스, 권한을 관리", boothLabel: "부스 운영자", boothDetail: "대기열, 체크인, 재고, 광고를 현장에서 관리",
     statementEyebrow: "부스 광고", statementTitle: ["별점이,", "곧 코인이에요."], statementBody: "방문객의 별점만큼 부스에 코인이 쌓이고, 그 코인으로 홈 화면 광고 자리를 직접 사요.",
     ossEyebrow: "오픈소스", ossTitle: ["누구나 자신의", "축제를 열 수 있게."], ossBody: "학교, 동아리, 동네 축제까지. 필요한 기반을 공개해 두었어요.", ossAction: "GitHub에서 보기",
     operatorEyebrow: "운영진을 위해", operatorTitle: ["현장의 모든 화면을,", "하나로."],
@@ -78,10 +87,12 @@ const LAUNCH_COPY = {
     heroAction: "Log in and explore", heroNote: "Preparing Sareumje 2026.",
     productEyebrow: "ONE FESTIVAL, SHARED BY EVERYONE", productTitle: ["The entire festival,", "on one screen."],
     productBody: "An effortless festival app for students. A reliable live system for the people running it.",
+    appEyebrow: "THE FESTIVAL IN YOUR HAND", appTitle: ["The festival you want,", "ready when you are."], appBody: "Booths, schedules, and rankings. The right information is always in the app.",
     features: [["Students", "See booths, performances, and live queues, then keep every visit and mission in one place."], ["Festival organizers", "Update notices, schedules, and booth status once, and share it with the entire festival instantly."], ["Booth teams", "Share queue and stock status, then use rating-earned coins to run home-screen ads."]],
     controlEyebrow: "FESTIVAL CONTROL ROOM", controlTitle: ["One monitor,", "the whole festival."],
     controlBody: "Notices, performances, queues, booth status, and QR check-in. Organizers manage it in one place, and changes reach the student app and booth screens right away.",
     controlItems: "Notices · schedules · queues · booth status", controlQR: "Show a QR check-in screen instantly",
+    workspaceEyebrow: "WORKSPACES FOR OPERATORS", workspaceTitle: "Fast on site. Calm in control.", workspaceBody: "Festival organizers and booth teams can see the right information and act on it in one place.", adminLabel: "Festival admin", adminDetail: "Manage schedules, notices, booths, and access across the festival", boothLabel: "Booth team", boothDetail: "Manage queues, check-ins, stock, and ads on site",
     statementEyebrow: "BOOTH ADS", statementTitle: ["Ratings become", "real currency."], statementBody: "Each visitor rating earns a booth coins they can spend on a place in the home-screen ad feed.",
     ossEyebrow: "OPEN SOURCE", ossTitle: ["So anyone can", "run their festival."], ossBody: "Schools, clubs, and neighborhood festivals can start with an open foundation.", ossAction: "View on GitHub",
     operatorEyebrow: "FOR THE TEAM RUNNING IT", operatorTitle: ["Every screen on site,", "together."],
@@ -215,7 +226,7 @@ function LaunchPage({ user }: { user: User | null }) {
               {copy.heroEyebrow}
             </span>
             <h1>
-              {copy.heroTitle.map((line, index) => <span className="launch-hero-line" style={{ animationDelay: `${80 + index * 120}ms` }} key={line}>{line}</span>)}
+              <span className="launch-hero-line" style={{ animationDelay: "80ms" }}>{copy.heroTitle.join(" ")}</span>
             </h1>
             <p className="launch-hero-fade" style={{ animationDelay: "520ms" }}>
               {copy.heroBody}
@@ -237,12 +248,12 @@ function LaunchPage({ user }: { user: User | null }) {
         <section className="launch-product-showcase">
           <Reveal className="launch-showcase-copy">
             <span>{copy.productEyebrow}</span>
-            <h2>{copy.productTitle[0]}<br />{copy.productTitle[1]}</h2>
+            <h2>{copy.productTitle.join(" ")}</h2>
             <p>{copy.productBody}</p>
           </Reveal>
           <div className="launch-showcase-scenes">
             {FEATURE_SECTIONS.map((feature, index) => (
-              <div className={`launch-showcase-scene scene-${index + 1}`} key={index}>
+              <div className={`launch-showcase-scene scene-${index + 1} ${feature.type}`} key={index}>
                 <img src={feature.image} alt="" />
               </div>
             ))}
@@ -257,14 +268,27 @@ function LaunchPage({ user }: { user: User | null }) {
           </div>
         </section>
 
+        <section className="launch-app-views">
+          <Reveal className="launch-app-views-copy">
+            <span>{copy.appEyebrow}</span>
+            <h2>{copy.appTitle.join(" ")}</h2>
+            <p>{copy.appBody}</p>
+          </Reveal>
+          <div className="launch-app-devices" aria-hidden="true">
+            <img className="launch-app-device launch-app-device-booth" src={heroDevice} alt="" />
+            <img className="launch-app-device launch-app-device-schedule" src={deviceSchedule} alt="" />
+            <img className="launch-app-device launch-app-device-ranking" src={deviceRanking} alt="" />
+          </div>
+        </section>
+
         <Reveal className="launch-control-room">
           <div className="launch-control-copy">
             <span>{copy.controlEyebrow}</span>
-            <h2>{copy.controlTitle[0]}<br />{copy.controlTitle[1]}</h2>
+            <h2>{copy.controlTitle.join(" ")}</h2>
             <p>{copy.controlBody}</p>
           </div>
           <div className="launch-control-screen">
-            <img src={fieldControl} alt="축제 현장을 관리하는 운영진" />
+            <img src={adminDashboard} alt="CBFESTA 축제 관리자 대시보드" />
             <div className="launch-control-overlay">
               <b>{copy.controlEyebrow}</b>
               <span>{copy.controlItems}</span>
@@ -273,16 +297,42 @@ function LaunchPage({ user }: { user: User | null }) {
           </div>
         </Reveal>
 
+        <section className="launch-workspaces">
+          <Reveal className="launch-workspaces-copy">
+            <span>{copy.workspaceEyebrow}</span>
+            <h2>{copy.workspaceTitle}</h2>
+            <p>{copy.workspaceBody}</p>
+          </Reveal>
+          <div className="launch-workspace-grid">
+            <article>
+              <div className="launch-desktop-device">
+                <div className="launch-desktop-screen"><img src={adminDashboard} alt="CBFESTA 축제 관리자 대시보드" /></div>
+                <div className="launch-desktop-stand" aria-hidden="true" />
+              </div>
+              <b>{copy.adminLabel}</b>
+              <p>{copy.adminDetail}</p>
+            </article>
+            <article>
+              <div className="launch-desktop-device">
+                <div className="launch-desktop-screen"><img src={boothDashboard} alt="CBFESTA 부스 운영자 대시보드" /></div>
+                <div className="launch-desktop-stand" aria-hidden="true" />
+              </div>
+              <b>{copy.boothLabel}</b>
+              <p>{copy.boothDetail}</p>
+            </article>
+          </div>
+        </section>
+
         <section className="launch-beliefs">
           <Reveal className="launch-statement">
             <span>{copy.statementEyebrow}</span>
-            <h2>{copy.statementTitle[0]}<br />{copy.statementTitle[1]}</h2>
+            <h2>{copy.statementTitle.join(" ")}</h2>
             <p>{copy.statementBody}</p>
           </Reveal>
 
           <Reveal className="launch-oss">
             <span>{copy.ossEyebrow}</span>
-            <h2>{copy.ossTitle[0]}<br />{copy.ossTitle[1]}</h2>
+            <h2>{copy.ossTitle.join(" ")}</h2>
             <p>{copy.ossBody}</p>
             <a
               className="secondary-action launch-oss-link"
@@ -297,7 +347,7 @@ function LaunchPage({ user }: { user: User | null }) {
 
         <Reveal className="launch-operator">
           <span>{copy.operatorEyebrow}</span>
-          <h2>{copy.operatorTitle[0]}<br />{copy.operatorTitle[1]}</h2>
+          <h2>{copy.operatorTitle.join(" ")}</h2>
           <ul className="launch-operator-list">
             {copy.operators.map((item) => (
               <li key={item[0]}>
@@ -343,7 +393,7 @@ function LaunchPage({ user }: { user: User | null }) {
         <Reveal className="launch-cta">
           <div className="launch-cta-copy">
             <span>{copy.ctaEyebrow}</span>
-            <h2>{copy.ctaTitle[0]}<br />{copy.ctaTitle[1]}</h2>
+            <h2>{copy.ctaTitle.join(" ")}</h2>
             <p>{copy.ctaBody}</p>
             <Link className="primary-action" to="/login">
               <LogIn /> {copy.ctaAction}
