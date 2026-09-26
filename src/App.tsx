@@ -127,6 +127,57 @@ function Reveal({
   );
 }
 
+// Continuous 0-1 value driven by an element's position through the
+// viewport, so motion tracks scroll position directly (scrub) instead of
+// firing once when a threshold is crossed. Reaches 1 as the element nears
+// viewport center and holds there; reverses smoothly if scrolled back up.
+function useScrollScrub<T extends HTMLElement>() {
+  const ref = useRef<T>(null);
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const rect = node.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      const centerDelta = rect.top + rect.height / 2 - vh / 2;
+      const p = 1 - Math.min(1, Math.max(0, Math.abs(centerDelta) / (vh * 0.7)));
+      setProgress(p);
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  return [ref, progress] as const;
+}
+
+function ScrubFrame({ children }: { children: ReactNode }) {
+  const [ref, progress] = useScrollScrub<HTMLDivElement>();
+  const eased = progress * progress * (3 - 2 * progress);
+  return (
+    <div
+      ref={ref}
+      className="launch-scrub-frame"
+      style={{
+        opacity: 0.25 + eased * 0.75,
+        transform: `scale(${0.86 + eased * 0.14}) translateY(${(1 - eased) * 36}px)`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function LaunchPage({ user }: { user: User | null }) {
   return (
     <div className="launch-page">
@@ -140,8 +191,20 @@ function LaunchPage({ user }: { user: User | null }) {
       </header>
       <main className="launch-main">
         <section className="launch-hero">
+          <div className="launch-hero-glow" aria-hidden="true" />
           <div className="launch-hero-copy">
-            <span className="launch-hero-eyebrow">FESTIVAL OPERATIONS PLATFORM</span>
+            <img
+              src={brandLogo}
+              alt=""
+              className="launch-hero-logo launch-hero-fade"
+              style={{ animationDelay: "0ms" }}
+            />
+            <span
+              className="launch-hero-eyebrow launch-hero-fade"
+              style={{ animationDelay: "60ms" }}
+            >
+              FESTIVAL OPERATIONS PLATFORM
+            </span>
             <h1>
               <span className="launch-hero-line" style={{ animationDelay: "80ms" }}>
                 부스도, 줄도, 랭킹도.
@@ -179,12 +242,60 @@ function LaunchPage({ user }: { user: User | null }) {
               <p>{feature.body}</p>
             </div>
             <div className="launch-feature-visual">
-              <div className="launch-device-frame">
-                <img src={feature.image} alt="" />
-              </div>
+              <ScrubFrame>
+                <div className="launch-device-frame">
+                  <img src={feature.image} alt="" />
+                </div>
+              </ScrubFrame>
             </div>
           </Reveal>
         ))}
+
+        <Reveal className="launch-stat-section">
+          <span>AD ECONOMY</span>
+          <h2>별점이 곧 돈이 되는 부스.</h2>
+          <p>
+            방문객이 남긴 별점만큼 부스에 코인이 쌓여요. 그 코인으로 홈 화면
+            광고 슬롯을 직접 구매할 수 있어요 - 요금과 최대 노출 시간은
+            관리자가 언제든 조정할 수 있고요.
+          </p>
+          <div className="launch-stat-grid">
+            <div className="launch-stat">
+              <b>1분</b>
+              <small>기본 광고 단가 (분당 코인, 관리자 설정)</small>
+            </div>
+            <div className="launch-stat">
+              <b>★ → 코인</b>
+              <small>별점을 남길 때마다 자동 적립</small>
+            </div>
+            <div className="launch-stat">
+              <b>실시간</b>
+              <small>구매 즉시 홈 화면 배너에 노출</small>
+            </div>
+          </div>
+        </Reveal>
+
+        <Reveal className="launch-oss">
+          <span>OPEN SOURCE</span>
+          <h2>
+            Apache 2.0 라이선스로
+            <br />
+            누구나 가져다 쓸 수 있어요.
+          </h2>
+          <p>
+            학교, 동아리, 동네 축제까지 - Supabase 프로젝트 하나와 이 저장소만
+            있으면 며칠 안에 자신의 행사에 맞게 띄울 수 있어요. 스키마, RLS
+            정책, 엣지 함수까지 전부 공개돼 있어요.
+          </p>
+          <a
+            className="secondary-action launch-oss-link"
+            href="https://github.com/lmwmason/CBFESTA"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub에서 보기 <ArrowRight />
+          </a>
+        </Reveal>
 
         <Reveal className="launch-operator">
           <div className="launch-highlights-head">
