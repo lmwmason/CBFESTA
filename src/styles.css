@@ -734,8 +734,8 @@ a.metric.accent:hover { background: #000; }
 @media (prefers-reduced-motion: reduce) {
   .reveal { opacity: 1; transform: none; transition: none; }
 }
-.launch-header { position: absolute; top: 0; left: 0; right: 0; z-index: 5; background: transparent; border-bottom: 0; backdrop-filter: none; }
-.launch-header .brand span, .launch-header .brand small { color: #fff; }
+.launch-header { position: absolute; top: 0; left: 0; right: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; background: transparent; border-bottom: 0; backdrop-filter: none; }
+.launch-header-mark { font: 800 13px Pretendard; letter-spacing: .1em; color: rgba(255,255,255,.85); }
 .launch-header .login-button { background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.3); }
 
 .launch-hero { position: relative; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; padding: clamp(96px,14vw,160px) clamp(16px,6vw,80px) clamp(64px,10vw,96px); background: #0a0a0a; color: #fff; overflow: hidden; }
@@ -785,7 +785,15 @@ a.metric.accent:hover { background: #000; }
 .launch-operator-list b { font-size: clamp(17px,2vw,20px); font-weight: 700; }
 .launch-operator-list span { color: rgba(255,255,255,.5); font-size: 14px; }
 
-.launch-cta { display: grid; justify-items: center; text-align: center; gap: 16px; min-height: 70svh; align-content: center; padding: clamp(64px,10vw,120px) clamp(16px,6vw,80px); border-top: 1px solid var(--line); }
+@media (max-width: 640px) {
+  .launch-operator-list li { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+.launch-statement, .launch-oss { display: flex; flex-direction: column; justify-content: center; min-height: 80svh; max-width: 720px; padding: clamp(48px,8vw,96px) clamp(16px,6vw,80px); border-top: 1px solid var(--line); }
+.launch-statement > span, .launch-oss > span { display: block; font: 700 11px Pretendard; letter-spacing: .12em; color: var(--muted); }
+.launch-statement h2, .launch-oss h2 { margin: 14px 0 20px; font-size: clamp(30px,5vw,56px); line-height: 1.2; letter-spacing: -.03em; font-weight: 800; }
+.launch-statement p, .launch-oss p { color: var(--secondary); font-size: clamp(15px,1.6vw,17px); line-height: 1.8; }
+.launch-oss-link { margin-top: 28px; align-self: flex-start; }
 .launch-cta > svg { width: 32px; color: var(--muted); }
 .launch-cta h2 { margin: 0; font-size: clamp(28px,5vw,48px); letter-spacing: -.03em; font-weight: 800; }
 .launch-cta p { margin: 0 0 8px; max-width: 420px; color: var(--muted); font-size: 15px; }

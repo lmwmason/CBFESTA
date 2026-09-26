@@ -8,9 +8,9 @@ import {
 import { ArrowRight, CalendarDays, LogIn, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
-import mockupBooth from "./assets/launch/mockup-booth.png";
-import mockupSchedule from "./assets/launch/mockup-schedule.png";
-import mockupRanking from "./assets/launch/mockup-ranking.png";
+import mockupBooth from "./assets/launch/mockup-booth.jpg";
+import mockupSchedule from "./assets/launch/mockup-schedule.jpg";
+import mockupRanking from "./assets/launch/mockup-ranking.jpg";
 import type { Tables } from "./lib/supabase/database.types";
 import {
   getActiveBoothAds,
@@ -169,7 +169,9 @@ function LaunchPage({ user }: { user: User | null }) {
   return (
     <div className="launch-page">
       <header className="header launch-header">
-        <Brand />
+        <Link className="launch-header-mark" to="/">
+          CBFESTA
+        </Link>
         <div className="header-tools">
           <Link className="login-button" to="/login">
             <LogIn /> {user ? "내 계정" : "로그인"}
@@ -196,18 +198,21 @@ function LaunchPage({ user }: { user: User | null }) {
               <span className="launch-hero-line" style={{ animationDelay: "80ms" }}>
                 부스도, 줄도, 랭킹도.
               </span>
-              <span className="launch-hero-line" style={{ animationDelay: "220ms" }}>
-                축제의 모든 순간을 하나로.
+              <span className="launch-hero-line" style={{ animationDelay: "200ms" }}>
+                축제의 모든 순간을
+              </span>
+              <span className="launch-hero-line" style={{ animationDelay: "320ms" }}>
+                하나로.
               </span>
             </h1>
-            <p className="launch-hero-fade" style={{ animationDelay: "420ms" }}>
+            <p className="launch-hero-fade" style={{ animationDelay: "520ms" }}>
               CBFESTA는 학교 축제를 운영하는 오픈소스 플랫폼이에요. 학생은 부스를
               찾고 줄을 서고 랭킹을 확인하고, 부스 운영자는 현장을 관리하고,
               관리자는 축제 전체를 한 화면에서 통제해요.
             </p>
             <div
               className="launch-hero-actions launch-hero-fade"
-              style={{ animationDelay: "540ms" }}
+              style={{ animationDelay: "640ms" }}
             >
               <Link className="primary-action" to="/login">
                 <LogIn /> 로그인하고 둘러보기
@@ -240,7 +245,10 @@ function LaunchPage({ user }: { user: User | null }) {
 
         <Reveal className="launch-statement">
           <span>AD ECONOMY</span>
-          <h2>별점이, 곧 코인이 됩니다.</h2>
+          <h2>
+            별점이,
+            <br />곧 코인이에요.
+          </h2>
           <p>
             방문객의 별점만큼 부스에 코인이 쌓이고, 그 코인으로 홈 화면 광고
             자리를 직접 사요. 단가와 노출 시간은 관리자가 정해요.
@@ -250,9 +258,9 @@ function LaunchPage({ user }: { user: User | null }) {
         <Reveal className="launch-oss">
           <span>OPEN SOURCE</span>
           <h2>
-            Apache 2.0 라이선스로
+            Apache 2.0 라이선스,
             <br />
-            누구나 가져다 쓸 수 있어요.
+            누구나 가져다 써요.
           </h2>
           <p>
             학교, 동아리, 동네 축제까지 - Supabase 프로젝트 하나와 이 저장소만
@@ -313,7 +321,11 @@ function LaunchPage({ user }: { user: User | null }) {
             <br />
             시작할 시간.
           </h2>
-          <p>운영진이 축제를 공개하면 부스, 일정, 랭킹이 모두 이 자리에 나타나요.</p>
+          <p>
+            운영진이 축제를 공개하면
+            <br />
+            부스, 일정, 랭킹이 모두 이 자리에 나타나요.
+          </p>
           <Link className="primary-action" to="/login">
             <LogIn /> 로그인
           </Link>
