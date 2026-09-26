@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CalendarDays, ChevronRight, LogIn, Search, X } from "lucide-react";
+import { ArrowRight, CalendarDays, LogIn, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
 import type { Tables } from "./lib/supabase/database.types";
@@ -16,6 +16,60 @@ import {
 import { useAuth } from "./features/auth/auth-context";
 import { getCategoryIcon } from "./lib/categoryIcons";
 import { AccountMenu } from "./components/AccountMenu";
+import type { User } from "@supabase/supabase-js";
+
+const HIGHLIGHT_VIDEOS = ["sEYQhS_GXsc", "TaY_Dk2yrqQ", "hETNL9O-Lng", "l31U7ixIOLI"];
+
+function LaunchPage({ user }: { user: User | null }) {
+  return (
+    <div className="launch-page">
+      <header className="header">
+        <Brand />
+        <div className="header-tools">
+          <Link className="login-button" to="/login">
+            <LogIn /> {user ? "내 계정" : "로그인"}
+          </Link>
+        </div>
+      </header>
+      <main className="launch-main">
+        <section className="launch-hero">
+          <span>SEE YOU SOON</span>
+          <h1>
+            사름제-2026,
+            <br />곧 열립니다.
+          </h1>
+          <p>
+            운영진이 축제를 공개하면 부스, 실시간 일정, 줄서기, 랭킹이 모두 이
+            자리에 나타나요. 그 전에 지난 축제의 순간들을 먼저 만나보세요.
+          </p>
+          <Link className="primary-action" to="/login">
+            <LogIn /> 로그인하고 준비하기
+          </Link>
+        </section>
+        <section className="launch-highlights">
+          <div className="launch-highlights-head">
+            <span>HIGHLIGHTS</span>
+            <h2>지난 축제 하이라이트</h2>
+          </div>
+          <div className="launch-video-grid">
+            {HIGHLIGHT_VIDEOS.map((videoId) => (
+              <div className="launch-video" key={videoId}>
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}`}
+                  title="CBFESTA 지난 축제 하이라이트 영상"
+                  loading="lazy"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
 
 type Catalog = Awaited<ReturnType<typeof getFestivalCatalog>>;
 function Brand() {
@@ -148,30 +202,7 @@ export default function App() {
         </section>
       </main>
     );
-  if (!festival)
-    return (
-      <main className="empty-festival">
-        <Brand />
-        <section>
-          <CalendarDays />
-          <span>FESTIVAL SETUP</span>
-          <h1>축제를 준비하고 있어요.</h1>
-          <p>
-            운영진이 단일 축제 설정을 완료하면 부스와 일정이 이곳에
-            표시됩니다.
-          </p>
-          {auth.user ? (
-            <Link className="secondary-action" to="/login">
-              내 계정
-            </Link>
-          ) : (
-            <Link className="primary-action" to="/login">
-              <LogIn /> 로그인
-            </Link>
-          )}
-        </section>
-      </main>
-    );
+  if (!festival) return <LaunchPage user={auth.user} />;
   return (
     <div className="site live-site">
       <header className="header">
@@ -318,33 +349,44 @@ export default function App() {
               </h3>
             </div>
           ) : (
-            <section className="booth-list">
+            <div className="shop-grid">
               {booths.map((booth) => {
                 const category = catalog?.categories?.find(
                   (candidate) => candidate.id === booth.category_id,
                 );
                 const CategoryIcon = getCategoryIcon(category?.code);
                 return (
-                  <Link to={`/booths/${booth.id}`} key={booth.id}>
-                    {booth.logo_url ? (
-                      <img src={booth.logo_url} alt="" />
-                    ) : (
-                      <i style={{ backgroundColor: booth.accent_color }}>
-                        <CategoryIcon />
-                      </i>
-                    )}
-                    <span>
-                      <b>{booth.name}</b>
-                      <small>
-                        {booth.short_description ?? booth.location ?? "부스 안내 보기"}
-                      </small>
-                    </span>
-                    <em>{booth.status}</em>
-                    <ChevronRight />
+                  <Link className="shop-card" to={`/booths/${booth.id}`} key={booth.id}>
+                    <div
+                      className="shop-card-cover"
+                      style={
+                        booth.cover_url
+                          ? { backgroundImage: `url(${booth.cover_url})` }
+                          : { backgroundColor: booth.accent_color }
+                      }
+                    >
+                      {!booth.cover_url && <CategoryIcon />}
+                    </div>
+                    <div className="shop-card-caption">
+                      {booth.logo_url ? (
+                        <img className="shop-card-logo" src={booth.logo_url} alt="" />
+                      ) : (
+                        <i
+                          className="shop-card-logo shop-card-logo-fallback"
+                          style={{ backgroundColor: booth.accent_color }}
+                        >
+                          {booth.name.slice(0, 1)}
+                        </i>
+                      )}
+                      <span>
+                        <small>{category?.name ?? "FESTIVAL BOOTH"}</small>
+                        <b>{booth.name}</b>
+                      </span>
+                    </div>
                   </Link>
                 );
               })}
-            </section>
+            </div>
           )}
         </section>
       </main>

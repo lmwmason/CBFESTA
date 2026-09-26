@@ -1,10 +1,17 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Save, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { ImageCropModal } from "../../components/ImageCropModal";
 import type { Tables } from "../../lib/supabase/database.types";
 import { supabase } from "../../lib/supabase/client";
-import { updateBooth, uploadBoothAsset } from "../../lib/supabase/services";
+import {
+  readImageDimensions,
+  updateBooth,
+  uploadBoothAsset,
+} from "../../lib/supabase/services";
 import { useAuth } from "../auth/auth-context";
+
+const COVER_ASPECT = 4 / 3;
 
 export function BoothSettingsPage() {
   const { user } = useAuth();
@@ -13,6 +20,7 @@ export function BoothSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<"logo" | "cover" | null>(null);
   const [error, setError] = useState("");
+  const [pendingCover, setPendingCover] = useState<File | null>(null);
   const [form, setForm] = useState({
     name: "",
     short_description: "",
@@ -137,16 +145,28 @@ export function BoothSettingsPage() {
           <label className="upload-zone">
             <input
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              accept="image/png,image/jpeg,image/webp"
               disabled={!booth || uploading !== null}
-              onChange={(event) => {
+              onChange={async (event) => {
                 const file = event.target.files?.[0];
-                if (file) void uploadImage("cover", file);
+                event.target.value = "";
+                if (!file) return;
+                try {
+                  const { width, height } = await readImageDimensions(file);
+                  const ratio = width / height;
+                  if (Math.abs(ratio - COVER_ASPECT) < 0.02) {
+                    void uploadImage("cover", file);
+                  } else {
+                    setPendingCover(file);
+                  }
+                } catch {
+                  setPendingCover(file);
+                }
               }}
             />
             <Upload />
             <b>{uploading === "cover" ? "업로드 중…" : "대표 이미지 선택"}</b>
-            <small>PNG, JPG, WEBP, SVG · 10MB 이하</small>
+            <small>PNG, JPG, WEBP · 10MB 이하 · 4:3 비율(다르면 자르기 화면이 열려요)</small>
           </label>
         </label>
         <label>
@@ -267,6 +287,18 @@ export function BoothSettingsPage() {
           </button>
         </footer>
       </form>
+      {pendingCover && (
+        <ImageCropModal
+          file={pendingCover}
+          aspect={COVER_ASPECT}
+          title="대표 이미지 자르기 (4:3)"
+          onCancel={() => setPendingCover(null)}
+          onCropped={(cropped) => {
+            setPendingCover(null);
+            void uploadImage("cover", cropped);
+          }}
+        />
+      )}
     </main>
   );
 }

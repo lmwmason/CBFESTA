@@ -101,14 +101,16 @@ supabase functions deploy qr
 npm run dev
 ```
 
-### First admin account
+### Roles
 
-Student numbers `9999` and `9998` are reserved during registration: signing
-up with student number `9999` grants the `admin` role, and `9998` grants
-`booth_operator`, on top of whatever festival a `festival_members` row
-enrolls the account into. Everyone else is enrolled as a plain participant.
-Adjust `private.enroll_new_user_in_current_festival()` in the schema if you
-want different reserved numbers or role rules.
+New accounts start as participants. Admins grant additional roles — admin,
+staff, booth operator — to specific accounts from the admin Permissions
+page as needed.
+
+To get a first admin on a fresh deployment, sign up with student number
+`9999` (reserved for admin) or `9998` (reserved for booth operator). Change
+the reserved numbers in `private.enroll_new_user_in_current_festival()` in
+the schema if you don't want to use these defaults.
 
 ## Project structure
 
