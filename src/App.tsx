@@ -185,7 +185,15 @@ export default function App() {
       ),
     [catalog, query],
   );
-  if (auth.loading || loading)
+  if (auth.loading)
+    return (
+      <div className="app-loading">
+        <img src={brandLogo} alt="" />
+        <span>Loading festival…</span>
+      </div>
+    );
+  if (!auth.user) return <LaunchPage user={null} />;
+  if (loading)
     return (
       <div className="app-loading">
         <img src={brandLogo} alt="" />
