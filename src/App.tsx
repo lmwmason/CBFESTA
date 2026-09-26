@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CalendarDays, LogIn, Search, X } from "lucide-react";
+import { ArrowRight, CalendarDays, ChevronRight, LogIn, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
 import type { Tables } from "./lib/supabase/database.types";
@@ -318,71 +318,33 @@ export default function App() {
               </h3>
             </div>
           ) : (
-            <div className="program-grid">
-              {booths.map((booth) => (
-                <Link
-                  className="live-program-card"
-                  to={`/booths/${booth.id}`}
-                  key={booth.id}
-                >
-                  <div
-                    className="program-cover"
-                    style={
-                      booth.cover_url
-                        ? { backgroundImage: `url(${booth.cover_url})` }
-                        : {
-                            backgroundColor:
-                              catalog?.categories?.find(
-                                (category) => category.id === booth.category_id,
-                              )?.color ?? "#f0e4e9",
-                          }
-                    }
-                  >
-                    <span>BOOTH</span>
-                    {!booth.cover_url &&
-                      (() => {
-                        const CategoryIcon = getCategoryIcon(
-                          catalog?.categories?.find(
-                            (category) => category.id === booth.category_id,
-                          )?.code,
-                        );
-                        return <CategoryIcon />;
-                      })()}
-                    <b>{booth.status.toUpperCase()}</b>
-                  </div>
-                  <div className="live-program-card-info">
+            <section className="booth-list">
+              {booths.map((booth) => {
+                const category = catalog?.categories?.find(
+                  (candidate) => candidate.id === booth.category_id,
+                );
+                const CategoryIcon = getCategoryIcon(category?.code);
+                return (
+                  <Link to={`/booths/${booth.id}`} key={booth.id}>
                     {booth.logo_url ? (
-                      <img
-                        className="booth-card-logo"
-                        src={booth.logo_url}
-                        alt=""
-                      />
+                      <img src={booth.logo_url} alt="" />
                     ) : (
-                      <i
-                        className="booth-card-logo booth-card-logo-fallback"
-                        style={{ backgroundColor: booth.accent_color }}
-                      >
-                        {booth.name.slice(0, 1)}
+                      <i style={{ backgroundColor: booth.accent_color }}>
+                        <CategoryIcon />
                       </i>
                     )}
                     <span>
+                      <b>{booth.name}</b>
                       <small>
-                        {catalog?.categories?.find(
-                          (category) => category.id === booth.category_id,
-                        )?.name ?? "FESTIVAL BOOTH"}
+                        {booth.short_description ?? booth.location ?? "부스 안내 보기"}
                       </small>
-                      <h3>{booth.name}</h3>
-                      <p>
-                        {booth.short_description ??
-                          booth.location ??
-                          "부스 안내 보기"}
-                        <ArrowRight />
-                      </p>
                     </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    <em>{booth.status}</em>
+                    <ChevronRight />
+                  </Link>
+                );
+              })}
+            </section>
           )}
         </section>
       </main>

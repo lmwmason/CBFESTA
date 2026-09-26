@@ -507,26 +507,6 @@ a.metric.accent:hover { background: #000; }
 .catalog-empty svg { width: 24px; }
 .catalog-empty h3 { margin: 0; font-size: 14px; font-weight: 600; }
 
-.listing-grid, .program-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 20px 12px; }
-.listing-grid > a, .live-program-card { min-width: 0; display: block; }
-.listing-thumb, .program-cover { aspect-ratio: 16/9; background: var(--line); background-size: cover; background-position: center; position: relative; padding: 12px; }
-.listing-thumb { display: grid; place-items: center; }
-.listing-thumb svg { width: 30px; color: var(--secondary); }
-.program-cover { display: flex; flex-direction: column; justify-content: space-between; }
-.program-cover span { font: 700 10px Pretendard; letter-spacing: .08em; color: var(--secondary); }
-.program-cover b { align-self: flex-end; font: 700 12px Pretendard; }
-.program-cover svg { width: 24px; color: var(--secondary); margin: auto; }
-.listing-grid > a > small, .live-program-card > small { display: block; margin-top: 12px; font: 700 10px Pretendard; letter-spacing: .08em; color: var(--muted); }
-.listing-grid h2 { margin: 6px 0 8px; font-size: 15px; }
-.live-program-card-info { display: flex; align-items: flex-start; gap: 12px; margin-top: 14px; }
-.live-program-card-info > span { min-width: 0; }
-.live-program-card-info small { display: block; margin: 0; font: 700 10px Pretendard; letter-spacing: .08em; color: var(--muted); }
-.live-program-card h3 { margin: 4px 0 6px; font-size: 16px; }
-.booth-card-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
-.booth-card-logo-fallback { display: grid; place-items: center; color: #fff; font: 700 18px Pretendard; }
-.listing-grid p, .live-program-card p { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin: 0; color: var(--muted); font-size: 13px; }
-.listing-grid p svg { width: 13px; }
-.live-program-card { padding-bottom: 14px; border-bottom: 1px solid var(--line); }
 
 .schedule-timeline { max-width: 720px; margin: 0 auto; }
 .timeline-day { margin-bottom: 36px; }
@@ -669,7 +649,6 @@ a.metric.accent:hover { background: #000; }
 
 @media (max-width: 800px) {
   .listing-page { padding: 40px 16px 90px; }
-  .listing-grid, .program-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .timeline-row { grid-template-columns: 44px 26px 1fr; }
   .timeline-list:before { left: 66px; }
   .timeline-time b { font-size: 12px; }

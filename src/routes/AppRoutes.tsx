@@ -667,16 +667,21 @@ function BoothsPage() {
   const [tab, setTab] = useState<"visited" | "unvisited">("visited");
 
   useEffect(() => {
-    if (!festival || !user) {
-      setVisitedBoothIds(new Set());
-      setVisitLoading(false);
-      return;
-    }
-    setVisitLoading(true);
-    void getMyVisitedBoothIds(festival.id, user.id)
-      .then(setVisitedBoothIds)
-      .catch(() => setVisitedBoothIds(new Set()))
-      .finally(() => setVisitLoading(false));
+    void (async () => {
+      if (!festival || !user) {
+        setVisitedBoothIds(new Set());
+        setVisitLoading(false);
+        return;
+      }
+      setVisitLoading(true);
+      try {
+        setVisitedBoothIds(await getMyVisitedBoothIds(festival.id, user.id));
+      } catch {
+        setVisitedBoothIds(new Set());
+      } finally {
+        setVisitLoading(false);
+      }
+    })();
   }, [festival, user]);
 
   if (loading) return <Loading />;
