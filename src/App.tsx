@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent,
   type ReactNode,
   type WheelEvent,
 } from "react";
@@ -149,6 +150,14 @@ function useScrollScrub<T extends HTMLElement>() {
     };
   }, []);
   return [ref, progress] as const;
+}
+
+function handleReelKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+  if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+  e.preventDefault();
+  const el = e.currentTarget;
+  const step = el.querySelector(".launch-video")?.clientWidth ?? 300;
+  el.scrollBy({ left: e.key === "ArrowRight" ? step + 16 : -(step + 16), behavior: "smooth" });
 }
 
 function handleReelWheel(e: WheelEvent<HTMLDivElement>) {
@@ -348,7 +357,14 @@ function LaunchPage({ user }: { user: User | null }) {
             <h2>사름제가 걸어온 순간들</h2>
           </div>
           <div className="launch-video-reel">
-            <div className="launch-video-grid" onWheel={handleReelWheel}>
+            <div
+              className="launch-video-grid"
+              onWheel={handleReelWheel}
+              onKeyDown={handleReelKeyDown}
+              tabIndex={0}
+              role="region"
+              aria-label="지난 사름제 하이라이트 영상, 좌우로 스크롤"
+            >
               {HIGHLIGHT_VIDEOS.map((videoId, index) => (
                 <div className="launch-video" key={videoId}>
                   <iframe
