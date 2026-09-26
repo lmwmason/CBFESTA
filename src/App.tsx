@@ -5,20 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  ArrowRight,
-  CalendarDays,
-  Coins,
-  LayoutDashboard,
-  LogIn,
-  Megaphone,
-  Package,
-  QrCode,
-  Search,
-  Star,
-  Trophy,
-  X,
-} from "lucide-react";
+import { ArrowRight, CalendarDays, LogIn, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
 import mockupBooth from "./assets/launch/mockup-booth.png";
@@ -82,12 +69,12 @@ const FEATURE_SECTIONS = [
 ];
 
 const OPERATOR_FEATURES = [
-  { icon: LayoutDashboard, label: "운영 현황판", detail: "체크인, 대기열, 신고 현황을 한 화면에서" },
-  { icon: QrCode, label: "QR 체크인", detail: "부스마다 고유 QR로 빠른 참여 확인" },
-  { icon: Package, label: "재고 관리", detail: "품절 임박 재고를 실시간으로 추적" },
-  { icon: Star, label: "부스 평점", detail: "방문객이 남긴 별점이 곧바로 반영" },
-  { icon: Coins, label: "광고 코인", detail: "별점으로 쌓은 코인으로 홈 화면 광고 구매" },
-  { icon: Megaphone, label: "공지 발송", detail: "긴급 공지를 전체 화면 상단에 즉시 노출" },
+  { label: "운영 현황판", detail: "체크인, 대기열, 신고 현황을 한 화면에서" },
+  { label: "QR 체크인", detail: "부스마다 고유 QR로 빠른 참여 확인" },
+  { label: "재고 관리", detail: "품절 임박 재고를 실시간으로 추적" },
+  { label: "부스 평점", detail: "방문객이 남긴 별점이 곧바로 반영" },
+  { label: "광고 코인", detail: "별점으로 쌓은 코인으로 홈 화면 광고 구매" },
+  { label: "공지 발송", detail: "긴급 공지를 전체 화면 상단에 즉시 노출" },
 ];
 
 function Reveal({
@@ -251,28 +238,13 @@ function LaunchPage({ user }: { user: User | null }) {
           </Reveal>
         ))}
 
-        <Reveal className="launch-stat-section">
+        <Reveal className="launch-statement">
           <span>AD ECONOMY</span>
-          <h2>별점이 곧 돈이 되는 부스.</h2>
+          <h2>별점이, 곧 코인이 됩니다.</h2>
           <p>
-            방문객이 남긴 별점만큼 부스에 코인이 쌓여요. 그 코인으로 홈 화면
-            광고 슬롯을 직접 구매할 수 있어요 - 요금과 최대 노출 시간은
-            관리자가 언제든 조정할 수 있고요.
+            방문객의 별점만큼 부스에 코인이 쌓이고, 그 코인으로 홈 화면 광고
+            자리를 직접 사요. 단가와 노출 시간은 관리자가 정해요.
           </p>
-          <div className="launch-stat-grid">
-            <div className="launch-stat">
-              <b>1분</b>
-              <small>기본 광고 단가 (분당 코인, 관리자 설정)</small>
-            </div>
-            <div className="launch-stat">
-              <b>★ → 코인</b>
-              <small>별점을 남길 때마다 자동 적립</small>
-            </div>
-            <div className="launch-stat">
-              <b>실시간</b>
-              <small>구매 즉시 홈 화면 배너에 노출</small>
-            </div>
-          </div>
         </Reveal>
 
         <Reveal className="launch-oss">
@@ -298,23 +270,20 @@ function LaunchPage({ user }: { user: User | null }) {
         </Reveal>
 
         <Reveal className="launch-operator">
-          <div className="launch-highlights-head">
-            <span>FOR OPERATORS</span>
-            <h2>현장은 운영진의 손끝에서.</h2>
-          </div>
-          <div className="launch-operator-grid">
-            {OPERATOR_FEATURES.map((item, index) => (
-              <Reveal
-                className="launch-operator-card"
-                delay={index * 60}
-                key={item.label}
-              >
-                <item.icon />
+          <span>FOR OPERATORS</span>
+          <h2>
+            현장은,
+            <br />
+            운영진의 손끝에서.
+          </h2>
+          <ul className="launch-operator-list">
+            {OPERATOR_FEATURES.map((item) => (
+              <li key={item.label}>
                 <b>{item.label}</b>
-                <small>{item.detail}</small>
-              </Reveal>
+                <span>{item.detail}</span>
+              </li>
             ))}
-          </div>
+          </ul>
         </Reveal>
 
         <Reveal className="launch-highlights">
@@ -339,8 +308,11 @@ function LaunchPage({ user }: { user: User | null }) {
         </Reveal>
 
         <Reveal className="launch-cta">
-          <Trophy />
-          <h2>지금 로그인하고 시작하세요.</h2>
+          <h2>
+            이제,
+            <br />
+            시작할 시간.
+          </h2>
           <p>운영진이 축제를 공개하면 부스, 일정, 랭킹이 모두 이 자리에 나타나요.</p>
           <Link className="primary-action" to="/login">
             <LogIn /> 로그인
