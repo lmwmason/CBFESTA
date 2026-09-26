@@ -182,11 +182,37 @@ function ScrubFrame({ children }: { children: ReactNode }) {
 
 function LaunchPage({ user }: { user: User | null }) {
   const [scrolled, setScrolled] = useState(false);
+  const glowRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  useEffect(() => {
+    const glow = glowRef.current;
+    if (!glow) return;
+    if (
+      !window.matchMedia("(hover: hover) and (pointer: fine)").matches ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+    let raf = 0;
+    const onMouseMove = (e: MouseEvent) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const x = (e.clientX / window.innerWidth - 0.5) * 48;
+        const y = (e.clientY / window.innerHeight - 0.5) * 32;
+        glow.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      });
+    };
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
   }, []);
   return (
     <div className="launch-page">
@@ -202,7 +228,7 @@ function LaunchPage({ user }: { user: User | null }) {
       </header>
       <main className="launch-main">
         <section className="launch-hero">
-          <div className="launch-hero-glow" aria-hidden="true" />
+          <div className="launch-hero-glow" aria-hidden="true" ref={glowRef} />
           <div className="launch-hero-copy">
             <img
               src={brandLogo}
