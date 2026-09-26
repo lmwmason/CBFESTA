@@ -2,6 +2,19 @@
 
 CBFESTA uses the following externally maintained software and visual assets. No assets were copied from Toss product screenshots or reverse-engineered from proprietary applications.
 
+## React and React DOM
+
+- Source: https://github.com/facebook/react
+- Version: 19.3.0
+- License: MIT
+
+## react-router-dom
+
+- Source: https://github.com/remix-run/react-router
+- Version: 7.18.4
+- License: MIT
+- Use in CBFESTA: client-side routing for the student, booth-operator, and admin surfaces.
+
 ## Tossface
 
 - Source: https://github.com/toss/tossface
@@ -24,7 +37,7 @@ CBFESTA uses the following externally maintained software and visual assets. No 
 - Source: https://github.com/motiondivision/motion
 - Version: 13.4.3
 - License: MIT
-- Use in CBFESTA: interaction springs, entrance transitions, shared layout movement, and overlays.
+- Use in CBFESTA: the sign-in sheet's entrance and layout transitions.
 
 ## Supabase JavaScript Client
 
@@ -40,22 +53,28 @@ CBFESTA uses the following externally maintained software and visual assets. No 
 - License: MIT
 - Use in CBFESTA: generates the scan-ready QR image for the dedicated booth monitor display.
 
-## Three.js and React Three Fiber
+## qr-scanner
 
-- Sources: https://github.com/mrdoob/three.js and https://github.com/pmndrs/react-three-fiber
-- Versions: three 0.186.1; @react-three/fiber 9.8.1
+- Source: https://github.com/nimiq/qr-scanner
+- Version: 1.4.2
 - License: MIT
-- Use in CBFESTA: rendering original CBFESTA team artifacts. The geometry, material composition, and art direction in this project are original CBFESTA work.
+- Use in CBFESTA: camera-based QR code scanning for booth check-in.
+
+## react-markdown
+
+- Source: https://github.com/remarkjs/react-markdown
+- Version: 10.1.0
+- License: MIT
+- Use in CBFESTA: renders booth operators' Markdown-authored booth descriptions as sanitized React elements (no raw HTML pass-through).
 
 ## Fonts
 
 - Pretendard — https://github.com/orioncactus/pretendard — SIL Open Font License 1.1
-- Manrope — https://fonts.google.com/specimen/Manrope — SIL Open Font License 1.1
-- Use in CBFESTA: Korean UI text and display numerals/headlines respectively.
+- Use in CBFESTA: the sole UI typeface across the app.
 
 ## Evaluated but not included
 
 - Toss `overlay-kit` (MIT): useful and actively maintained, but unnecessary for the current single search overlay. Avoided to keep the initial bundle and abstraction surface smaller.
 - Toss `use-funnel` (MIT): not introduced because the current experience has no multi-step funnel.
-- Toss `Suspensive`: not introduced because native React Suspense is sufficient for the current 3D loading boundary.
-- Toss functional icons/animation assets: not included because no independent, officially distributed package with clearly suitable redistribution terms was identified for this project. Lucide and original CBFESTA motion are used instead.
+- Toss `Suspensive`: not introduced because native React Suspense is sufficient for the app's loading boundaries.
+- Toss functional icons/animation assets: not included because no independent, officially distributed package with clearly suitable redistribution terms was identified for this project. Lucide and Motion are used instead.
