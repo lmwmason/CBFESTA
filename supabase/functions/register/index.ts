@@ -19,13 +19,19 @@ Deno.serve(async (request) => {
     if (typeof password !== 'string' || password.length < 8 || password.length > 72) return json({ error: '비밀번호는 8~72자로 입력해 주세요.' }, 400);
     if (typeof name !== 'string' || name.trim().length < 1 || name.trim().length > 40) return json({ error: '이름을 확인해 주세요.' }, 400);
     if (accountType !== 'student' && accountType !== 'teacher') return json({ error: '계정 유형을 확인해 주세요.' }, 400);
-    if (typeof studentNumber !== 'string' || !studentNumberPattern.test(studentNumber.trim())) return json({ error: '학번 4자리를 입력해 주세요. 예: 2309' }, 400);
+    if (accountType === 'student' && (typeof studentNumber !== 'string' || !studentNumberPattern.test(studentNumber.trim())))
+      return json({ error: '학번 4자리를 입력해 주세요. 예: 2309' }, 400);
 
     const loginId = id.trim().toLowerCase();
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data, error } = await admin.auth.admin.createUser({
       email: `${loginId}@${EMAIL_DOMAIN}`, password, email_confirm: true,
-      user_metadata: { full_name: name.trim(), login_id: loginId, student_number: studentNumber.trim(), account_type: accountType },
+      user_metadata: {
+        full_name: name.trim(),
+        login_id: loginId,
+        student_number: accountType === 'student' ? studentNumber.trim() : null,
+        account_type: accountType,
+      },
     });
     if (error) {
       const duplicate = /already|registered|unique/i.test(error.message);

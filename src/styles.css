@@ -729,25 +729,55 @@ a.metric.accent:hover { background: #000; }
 .app-loading img { width: 44px; }
 
 .launch-page { min-height: 100vh; }
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.16,1,.3,1), transform .7s cubic-bezier(.16,1,.3,1); }
+.reveal.is-visible { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
 .launch-hero { padding: clamp(64px,12vw,140px) clamp(16px,6vw,80px) clamp(48px,8vw,88px); max-width: 760px; }
 .launch-hero > span { display: block; font: 700 11px Pretendard; letter-spacing: .16em; color: var(--muted); }
 .launch-hero h1 { margin: 16px 0; font-size: clamp(36px,7vw,64px); line-height: 1.12; letter-spacing: -.03em; }
 .launch-hero p { max-width: 480px; margin: 0 0 28px; color: var(--secondary); font-size: 15px; line-height: 1.75; }
+.launch-hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.launch-hero-note { font-size: 12px; color: var(--muted); }
+
+.launch-feature { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: clamp(24px,5vw,64px); align-items: center; padding: clamp(40px,7vw,88px) clamp(16px,6vw,80px); border-top: 1px solid var(--line); }
+.launch-feature.reverse { direction: rtl; }
+.launch-feature.reverse > * { direction: ltr; }
+.launch-feature-text > span { display: block; font: 700 11px Pretendard; letter-spacing: .12em; color: var(--muted); }
+.launch-feature-text h2 { margin: 12px 0 16px; font-size: clamp(24px,4vw,36px); line-height: 1.25; letter-spacing: -.03em; }
+.launch-feature-text p { max-width: 440px; color: var(--secondary); font-size: 15px; line-height: 1.75; }
+.launch-feature-visual { display: flex; justify-content: center; }
+.launch-device-frame { position: relative; width: min(260px, 70vw); border: 10px solid var(--strong); border-radius: 32px; overflow: hidden; background: var(--strong); box-shadow: 0 24px 48px rgba(0,0,0,.16); }
+.launch-device-frame img { display: block; width: 100%; height: auto; }
+
+.launch-operator { padding: clamp(48px,8vw,96px) clamp(16px,6vw,80px); border-top: 1px solid var(--line); background: #f7f6f4; }
+.launch-operator-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+.launch-operator-card { padding: 20px; background: #fff; border: 1px solid var(--line); }
+.launch-operator-card svg { width: 20px; color: var(--secondary); }
+.launch-operator-card b { display: block; margin-top: 12px; font-size: 14px; }
+.launch-operator-card small { display: block; margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.5; }
+
+.launch-cta { display: grid; justify-items: center; text-align: center; gap: 14px; padding: clamp(64px,10vw,120px) clamp(16px,6vw,80px); border-top: 1px solid var(--line); }
+.launch-cta > svg { width: 32px; color: var(--muted); }
+.launch-cta h2 { margin: 0; font-size: clamp(24px,4vw,34px); letter-spacing: -.03em; }
+.launch-cta p { margin: 0 0 8px; max-width: 420px; color: var(--muted); font-size: 14px; }
+
 .launch-highlights { padding: 0 clamp(16px,6vw,80px) clamp(64px,10vw,120px); }
 .launch-highlights-head { margin-bottom: 24px; }
 .launch-highlights-head > span { display: block; font: 700 11px Pretendard; letter-spacing: .1em; color: var(--muted); }
 .launch-highlights-head h2 { margin: 8px 0 0; font-size: clamp(22px,3vw,30px); letter-spacing: -.03em; }
-.launch-video-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
-.launch-video { position: relative; aspect-ratio: 16/9; background: #0c0c0c; border: 1px solid var(--line); overflow: hidden; }
+.launch-video-grid { display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x proximity; padding-bottom: 4px; }
+.launch-video { position: relative; flex: 0 0 auto; width: min(78vw, 420px); aspect-ratio: 16/9; background: #0c0c0c; border: 1px solid var(--line); overflow: hidden; scroll-snap-align: start; }
 .launch-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
-@media (max-width: 700px) {
-  .launch-video-grid { grid-template-columns: 1fr; }
-}
 
 @media (max-width: 900px) {
   .festival-hero { display: block; }
   .festival-hero aside { margin-top: 32px; }
+  .launch-feature, .launch-feature.reverse { grid-template-columns: 1fr; direction: ltr; }
+  .launch-feature-visual { order: -1; }
+  .launch-operator-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 767px) {
   .live-catalog { padding: 32px 16px; }

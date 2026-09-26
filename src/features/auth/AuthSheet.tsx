@@ -119,7 +119,7 @@ export function AuthSheet({ onClose }: { onClose?: () => void }) {
               </label>
             </div>
           )}
-          {mode === "signup" && (
+          {mode === "signup" && form.accountType === "student" && (
             <label>
               <span>학번</span>
               <div>
