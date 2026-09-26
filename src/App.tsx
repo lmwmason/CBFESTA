@@ -10,9 +10,10 @@ import {
 import { ArrowRight, CalendarDays, LogIn, Search, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import brandLogo from "./assets/cbfesta-logo.png";
-import mockupBooth from "./assets/launch/mockup-booth.jpg";
-import mockupSchedule from "./assets/launch/mockup-schedule.jpg";
-import mockupRanking from "./assets/launch/mockup-ranking.jpg";
+import heroDevice from "./assets/launch/hero-device-3d.webp";
+import fieldControl from "./assets/launch/field-control-app.webp";
+import fieldQr from "./assets/launch/field-qr-app.webp";
+import fieldBoothStatus from "./assets/launch/field-booth-status-app.webp";
 import type { Tables } from "./lib/supabase/database.types";
 import {
   getActiveBoothAds,
@@ -33,51 +34,62 @@ const HIGHLIGHT_VIDEOS = ["sEYQhS_GXsc", "TaY_Dk2yrqQ", "hETNL9O-Lng", "l31U7ixI
 
 const FEATURE_SECTIONS = [
   {
-    eyebrow: "BOOTHS & QUEUEING",
-    title: (
-      <>
-        부스를 한눈에,
-        <br />
-        줄은 스마트하게.
-      </>
-    ),
-    body: "지도 대신 검색 한 번으로 부스를 찾고, 현장에 줄을 서지 않아도 학번만 알면 친구와 함께 원격으로 줄을 설 수 있어요. 방문을 마치면 별점도 남길 수 있어요.",
-    image: mockupBooth,
+    image: fieldQr,
   },
   {
-    eyebrow: "LIVE SCHEDULE",
-    title: (
-      <>
-        시간표가 아니라
-        <br />
-        실시간 타임라인.
-      </>
-    ),
-    body: "공연, 행사, 부스 운영 시간이 하루 단위 타임라인으로 정리돼요. 관리자가 수정하면 학생 화면에 그대로 반영됩니다.",
-    image: mockupSchedule,
+    image: fieldControl,
   },
   {
-    eyebrow: "RANKINGS",
-    title: (
-      <>
-        팀, 개인, 부스까지
-        <br />
-        모든 순위를 한 곳에서.
-      </>
-    ),
-    body: "팀 점수 순위는 물론, 미션으로 쌓은 개인 점수, 별점으로 쌓인 부스 인기 순위까지 세 가지 랭킹을 한 화면에서 확인할 수 있어요.",
-    image: mockupRanking,
+    image: fieldBoothStatus,
   },
 ];
 
-const OPERATOR_FEATURES = [
-  { label: "운영 현황판", detail: "체크인, 대기열, 신고 현황을 한 화면에서" },
-  { label: "QR 체크인", detail: "부스마다 고유 QR로 빠른 참여 확인" },
-  { label: "재고 관리", detail: "품절 임박 재고를 실시간으로 추적" },
-  { label: "부스 평점", detail: "방문객이 남긴 별점이 곧바로 반영" },
-  { label: "광고 코인", detail: "별점으로 쌓은 코인으로 홈 화면 광고 구매" },
-  { label: "공지 발송", detail: "긴급 공지를 전체 화면 상단에 즉시 노출" },
-];
+type LaunchLanguage = "ko" | "en";
+
+const LAUNCH_COPY = {
+  ko: {
+    login: "로그인", account: "내 계정", language: "EN",
+    heroEyebrow: "충북과학고 축제 플랫폼",
+    heroTitle: ["부스도, 줄도, 랭킹도.", "축제의 모든 순간을", "하나로."],
+    heroBody: "CBFESTA는 학교 축제를 운영하는 오픈소스 플랫폼이에요. 학생은 부스를 찾고 줄을 서고 랭킹을 확인하고, 부스 운영자는 현장을 관리하고, 관리자는 축제 전체를 한 화면에서 통제해요.",
+    heroAction: "로그인하고 둘러보기", heroNote: "지금은 사름제-2026을 준비하고 있어요.",
+    productEyebrow: "모두가 같은 축제를 봐요", productTitle: ["축제 전체가,", "하나의 화면으로."],
+    productBody: "학생에게는 가장 편한 축제 앱으로, 운영진에게는 가장 믿을 수 있는 현장 시스템으로.",
+    features: [
+      ["학생", "부스와 공연, 대기열을 실시간으로 보고 방문한 부스와 미션 기록도 앱에서 바로 확인해요."],
+      ["축제 운영진", "전체 공지부터 공연 일정, 부스 상황까지 수정하는 즉시 축제 전체 화면에 반영해요."],
+      ["부스 운영자", "대기열과 재고 상태를 알리고, 별점으로 쌓은 코인으로 광고 자리까지 직접 운영해요."],
+    ],
+    controlEyebrow: "축제 상황판", controlTitle: ["모니터 하나면,", "현장이 보입니다."],
+    controlBody: "공지, 공연, 대기열, 부스 상태, QR 체크인까지. 운영진은 필요한 정보를 한 화면에서 관리하고, 바뀐 내용은 학생 앱과 부스 화면에 바로 닿아요.",
+    controlItems: "공지 · 일정 · 대기열 · 부스 상태", controlQR: "QR 체크인 화면으로 바로 띄우기",
+    statementEyebrow: "부스 광고", statementTitle: ["별점이,", "곧 코인이에요."], statementBody: "방문객의 별점만큼 부스에 코인이 쌓이고, 그 코인으로 홈 화면 광고 자리를 직접 사요.",
+    ossEyebrow: "오픈소스", ossTitle: ["누구나 자신의", "축제를 열 수 있게."], ossBody: "학교, 동아리, 동네 축제까지. 필요한 기반을 공개해 두었어요.", ossAction: "GitHub에서 보기",
+    operatorEyebrow: "운영진을 위해", operatorTitle: ["현장의 모든 화면을,", "하나로."],
+    operators: [["운영 현황판", "체크인, 대기열, 신고 현황을 한 화면에서"], ["QR 체크인", "부스마다 고유 QR로 빠른 참여 확인"], ["재고 관리", "품절 임박 재고를 실시간으로 추적"], ["부스 평점", "방문객이 남긴 별점이 곧바로 반영"], ["광고 코인", "별점으로 쌓은 코인으로 홈 화면 광고 구매"], ["공지 발송", "긴급 공지를 전체 화면 상단에 즉시 노출"]],
+    highlightsEyebrow: "지난 사름제", highlightsTitle: "사름제가 걸어온 순간들", reelHint: "휠 또는 ← → 키로 지난 영상을 둘러보세요.", reelLabel: "지난 사름제 하이라이트 영상, 좌우로 스크롤", videoTitle: "사름제 하이라이트 영상",
+    ctaEyebrow: "사름제 2026", ctaTitle: ["이제,", "시작할 시간."], ctaBody: "운영진이 축제를 공개하면\n부스, 일정, 랭킹이 모두 이 자리에 나타나요.", ctaAction: "로그인하고 둘러보기", stamp: "사름제", stampNote: "축제를 준비하는\n모든 사람을 위해",
+  },
+  en: {
+    login: "Log in", account: "My account", language: "한국어",
+    heroEyebrow: "CHUNGBUK SCIENCE HIGH SCHOOL FESTIVAL PLATFORM",
+    heroTitle: ["Booths, queues, rankings.", "Every festival moment,", "together."],
+    heroBody: "CBFESTA is an open-source platform for running school festivals. Students discover booths, join queues, and follow rankings. Booth teams manage their space, while organizers stay in control of the entire festival.",
+    heroAction: "Log in and explore", heroNote: "Preparing Sareumje 2026.",
+    productEyebrow: "ONE FESTIVAL, SHARED BY EVERYONE", productTitle: ["The entire festival,", "on one screen."],
+    productBody: "An effortless festival app for students. A reliable live system for the people running it.",
+    features: [["Students", "See booths, performances, and live queues, then keep every visit and mission in one place."], ["Festival organizers", "Update notices, schedules, and booth status once, and share it with the entire festival instantly."], ["Booth teams", "Share queue and stock status, then use rating-earned coins to run home-screen ads."]],
+    controlEyebrow: "FESTIVAL CONTROL ROOM", controlTitle: ["One monitor,", "the whole festival."],
+    controlBody: "Notices, performances, queues, booth status, and QR check-in. Organizers manage it in one place, and changes reach the student app and booth screens right away.",
+    controlItems: "Notices · schedules · queues · booth status", controlQR: "Show a QR check-in screen instantly",
+    statementEyebrow: "BOOTH ADS", statementTitle: ["Ratings become", "real currency."], statementBody: "Each visitor rating earns a booth coins they can spend on a place in the home-screen ad feed.",
+    ossEyebrow: "OPEN SOURCE", ossTitle: ["So anyone can", "run their festival."], ossBody: "Schools, clubs, and neighborhood festivals can start with an open foundation.", ossAction: "View on GitHub",
+    operatorEyebrow: "FOR THE TEAM RUNNING IT", operatorTitle: ["Every screen on site,", "together."],
+    operators: [["Live operations", "Check-ins, queues, and reports in one view"], ["QR check-in", "A unique QR at every booth for quick participation"], ["Stock control", "Track items that are nearly sold out in real time"], ["Booth ratings", "Visitor ratings appear right away"], ["Ad coins", "Spend rating-earned coins on home-screen ads"], ["Notices", "Put urgent notices at the top of every screen"]],
+    highlightsEyebrow: "PREVIOUS SAREUMJE", highlightsTitle: "Moments from Sareumje", reelHint: "Use your wheel or ← → keys to explore the films.", reelLabel: "Sareumje highlight films, scroll horizontally", videoTitle: "Sareumje highlight film",
+    ctaEyebrow: "SAREUMJE 2026", ctaTitle: ["Now,", "it’s time to begin."], ctaBody: "When the organizers open the festival,\nbooths, schedules, and rankings will appear here.", ctaAction: "Log in and explore", stamp: "SAREUMJE", stampNote: "FOR EVERYONE\nMAKING A FESTIVAL",
+  },
+} as const;
 
 function Reveal({
   children,
@@ -116,42 +128,6 @@ function Reveal({
   );
 }
 
-// Continuous 0-1 value driven by an element's position through the
-// viewport, so motion tracks scroll position directly (scrub) instead of
-// firing once when a threshold is crossed. Reaches 1 as the element nears
-// viewport center and holds there; reverses smoothly if scrolled back up.
-function useScrollScrub<T extends HTMLElement>() {
-  const ref = useRef<T>(null);
-  const [progress, setProgress] = useState(() =>
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 1 : 0,
-  );
-  useEffect(() => {
-    const node = ref.current;
-    if (!node || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const rect = node.getBoundingClientRect();
-      const vh = window.innerHeight || 1;
-      const centerDelta = rect.top + rect.height / 2 - vh / 2;
-      const p = 1 - Math.min(1, Math.max(0, Math.abs(centerDelta) / (vh * 0.7)));
-      setProgress(p);
-    };
-    const onScroll = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
-      if (raf) cancelAnimationFrame(raf);
-    };
-  }, []);
-  return [ref, progress] as const;
-}
-
 function handleReelKeyDown(e: KeyboardEvent<HTMLDivElement>) {
   if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
   e.preventDefault();
@@ -171,27 +147,11 @@ function handleReelWheel(e: WheelEvent<HTMLDivElement>) {
   }
 }
 
-function ScrubFrame({ children }: { children: ReactNode }) {
-  const [ref, progress] = useScrollScrub<HTMLDivElement>();
-  const eased = progress * progress * (3 - 2 * progress);
-  return (
-    <div
-      ref={ref}
-      className="launch-scrub-frame"
-      style={{
-        opacity: 0.25 + eased * 0.75,
-        transform: `perspective(1200px) rotateX(${(1 - eased) * 6}deg) scale(${0.86 + eased * 0.14}) translateY(${(1 - eased) * 36}px)`,
-        willChange: "transform, opacity",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
 function LaunchPage({ user }: { user: User | null }) {
   const [scrolled, setScrolled] = useState(false);
+  const [language, setLanguage] = useState<LaunchLanguage>("ko");
   const glowRef = useRef<HTMLDivElement>(null);
+  const copy = LAUNCH_COPY[language];
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80);
     onScroll();
@@ -230,8 +190,11 @@ function LaunchPage({ user }: { user: User | null }) {
           CBFESTA
         </Link>
         <div className="header-tools">
+          <button className="launch-language-toggle" onClick={() => setLanguage(language === "ko" ? "en" : "ko")}>
+            {copy.language}
+          </button>
           <Link className="login-button" to="/login">
-            <LogIn /> {user ? "내 계정" : "로그인"}
+            <LogIn /> {user ? copy.account : copy.login}
           </Link>
         </div>
       </header>
@@ -249,103 +212,97 @@ function LaunchPage({ user }: { user: User | null }) {
               className="launch-hero-eyebrow launch-hero-fade"
               style={{ animationDelay: "60ms" }}
             >
-              FESTIVAL OPERATIONS PLATFORM
+              {copy.heroEyebrow}
             </span>
             <h1>
-              <span className="launch-hero-line" style={{ animationDelay: "80ms" }}>
-                부스도, 줄도, 랭킹도.
-              </span>
-              <span className="launch-hero-line" style={{ animationDelay: "200ms" }}>
-                축제의 모든 순간을
-              </span>
-              <span className="launch-hero-line" style={{ animationDelay: "320ms" }}>
-                하나로.
-              </span>
+              {copy.heroTitle.map((line, index) => <span className="launch-hero-line" style={{ animationDelay: `${80 + index * 120}ms` }} key={line}>{line}</span>)}
             </h1>
             <p className="launch-hero-fade" style={{ animationDelay: "520ms" }}>
-              CBFESTA는 학교 축제를 운영하는 오픈소스 플랫폼이에요. 학생은 부스를
-              찾고 줄을 서고 랭킹을 확인하고, 부스 운영자는 현장을 관리하고,
-              관리자는 축제 전체를 한 화면에서 통제해요.
+              {copy.heroBody}
             </p>
             <div
               className="launch-hero-actions launch-hero-fade"
               style={{ animationDelay: "640ms" }}
             >
               <Link className="primary-action" to="/login">
-                <LogIn /> 로그인하고 둘러보기
+                <LogIn /> {copy.heroAction}
               </Link>
-              <span className="launch-hero-note">지금은 사름제-2026을 준비하고 있어요.</span>
+              <span className="launch-hero-note">{copy.heroNote}</span>
             </div>
           </div>
+          <img className="launch-hero-product" src={heroDevice} alt="CBFESTA festival app on a smartphone" />
           <div className="launch-hero-scroll-cue" aria-hidden="true" />
         </section>
 
-        {FEATURE_SECTIONS.map((feature, index) => (
-          <Reveal
-            className={`launch-feature ${index % 2 === 1 ? "reverse" : ""}`}
-            key={feature.eyebrow}
-          >
-            <div className="launch-feature-text">
-              <span>{feature.eyebrow}</span>
-              <h2>{feature.title}</h2>
-              <p>{feature.body}</p>
-            </div>
-            <div className="launch-feature-visual">
-              <ScrubFrame>
-                <div className="launch-device-frame">
-                  <img src={feature.image} alt="" />
-                </div>
-              </ScrubFrame>
-            </div>
+        <section className="launch-product-showcase">
+          <Reveal className="launch-showcase-copy">
+            <span>{copy.productEyebrow}</span>
+            <h2>{copy.productTitle[0]}<br />{copy.productTitle[1]}</h2>
+            <p>{copy.productBody}</p>
           </Reveal>
-        ))}
+          <div className="launch-showcase-scenes">
+            {FEATURE_SECTIONS.map((feature, index) => (
+              <div className={`launch-showcase-scene scene-${index + 1}`} key={index}>
+                <img src={feature.image} alt="" />
+              </div>
+            ))}
+          </div>
+          <div className="launch-showcase-notes">
+            {FEATURE_SECTIONS.map((feature, index) => (
+              <article key={copy.features[index][0]}>
+                <b>{copy.features[index][0]}</b>
+                <p>{copy.features[index][1]}</p>
+              </article>
+            ))}
+          </div>
+        </section>
 
-        <Reveal className="launch-statement">
-          <span>AD ECONOMY</span>
-          <h2>
-            별점이,
-            <br />곧 코인이에요.
-          </h2>
-          <p>
-            방문객의 별점만큼 부스에 코인이 쌓이고, 그 코인으로 홈 화면 광고
-            자리를 직접 사요. 단가와 노출 시간은 관리자가 정해요.
-          </p>
+        <Reveal className="launch-control-room">
+          <div className="launch-control-copy">
+            <span>{copy.controlEyebrow}</span>
+            <h2>{copy.controlTitle[0]}<br />{copy.controlTitle[1]}</h2>
+            <p>{copy.controlBody}</p>
+          </div>
+          <div className="launch-control-screen">
+            <img src={fieldControl} alt="축제 현장을 관리하는 운영진" />
+            <div className="launch-control-overlay">
+              <b>{copy.controlEyebrow}</b>
+              <span>{copy.controlItems}</span>
+              <i>{copy.controlQR}</i>
+            </div>
+          </div>
         </Reveal>
 
-        <Reveal className="launch-oss">
-          <span>OPEN SOURCE</span>
-          <h2>
-            Apache 2.0 라이선스,
-            <br />
-            누구나 가져다 써요.
-          </h2>
-          <p>
-            학교, 동아리, 동네 축제까지 - Supabase 프로젝트 하나와 이 저장소만
-            있으면 며칠 안에 자신의 행사에 맞게 띄울 수 있어요. 스키마, RLS
-            정책, 엣지 함수까지 전부 공개돼 있어요.
-          </p>
-          <a
-            className="secondary-action launch-oss-link"
-            href="https://github.com/lmwmason/CBFESTA"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            GitHub에서 보기 <ArrowRight />
-          </a>
-        </Reveal>
+        <section className="launch-beliefs">
+          <Reveal className="launch-statement">
+            <span>{copy.statementEyebrow}</span>
+            <h2>{copy.statementTitle[0]}<br />{copy.statementTitle[1]}</h2>
+            <p>{copy.statementBody}</p>
+          </Reveal>
+
+          <Reveal className="launch-oss">
+            <span>{copy.ossEyebrow}</span>
+            <h2>{copy.ossTitle[0]}<br />{copy.ossTitle[1]}</h2>
+            <p>{copy.ossBody}</p>
+            <a
+              className="secondary-action launch-oss-link"
+              href="https://github.com/lmwmason/CBFESTA"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {copy.ossAction} <ArrowRight />
+            </a>
+          </Reveal>
+        </section>
 
         <Reveal className="launch-operator">
-          <span>FOR OPERATORS</span>
-          <h2>
-            현장은,
-            <br />
-            운영진의 손끝에서.
-          </h2>
+          <span>{copy.operatorEyebrow}</span>
+          <h2>{copy.operatorTitle[0]}<br />{copy.operatorTitle[1]}</h2>
           <ul className="launch-operator-list">
-            {OPERATOR_FEATURES.map((item) => (
-              <li key={item.label}>
-                <b>{item.label}</b>
-                <span>{item.detail}</span>
+            {copy.operators.map((item) => (
+              <li key={item[0]}>
+                <b>{item[0]}</b>
+                <span>{item[1]}</span>
               </li>
             ))}
           </ul>
@@ -353,8 +310,8 @@ function LaunchPage({ user }: { user: User | null }) {
 
         <Reveal className="launch-highlights">
           <div className="launch-highlights-head">
-            <span>지난 사름제</span>
-            <h2>사름제가 걸어온 순간들</h2>
+            <span>{copy.highlightsEyebrow}</span>
+            <h2>{copy.highlightsTitle}</h2>
           </div>
           <div className="launch-video-reel">
             <div
@@ -363,13 +320,13 @@ function LaunchPage({ user }: { user: User | null }) {
               onKeyDown={handleReelKeyDown}
               tabIndex={0}
               role="region"
-              aria-label="지난 사름제 하이라이트 영상, 좌우로 스크롤"
+              aria-label={copy.reelLabel}
             >
               {HIGHLIGHT_VIDEOS.map((videoId, index) => (
                 <div className="launch-video" key={videoId}>
                   <iframe
                     src={`https://www.youtube.com/embed/${videoId}`}
-                    title={`사름제 하이라이트 영상 ${index + 1}`}
+                    title={`${copy.videoTitle} ${index + 1}`}
                     loading="lazy"
                     referrerPolicy="strict-origin-when-cross-origin"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -380,22 +337,23 @@ function LaunchPage({ user }: { user: User | null }) {
             </div>
             <div className="launch-video-reel-fade" aria-hidden="true" />
           </div>
+          <p className="launch-reel-hint">{copy.reelHint}</p>
         </Reveal>
 
         <Reveal className="launch-cta">
-          <h2>
-            이제,
-            <br />
-            시작할 시간.
-          </h2>
-          <p>
-            운영진이 축제를 공개하면
-            <br />
-            부스, 일정, 랭킹이 모두 이 자리에 나타나요.
-          </p>
-          <Link className="primary-action" to="/login">
-            <LogIn /> 로그인
-          </Link>
+          <div className="launch-cta-copy">
+            <span>{copy.ctaEyebrow}</span>
+            <h2>{copy.ctaTitle[0]}<br />{copy.ctaTitle[1]}</h2>
+            <p>{copy.ctaBody}</p>
+            <Link className="primary-action" to="/login">
+              <LogIn /> {copy.ctaAction}
+            </Link>
+          </div>
+          <div className="launch-cta-stamp" aria-hidden="true">
+            <span>{copy.stamp}</span>
+            <b>2026</b>
+            <small>{copy.stampNote}</small>
+          </div>
         </Reveal>
       </main>
     </div>
