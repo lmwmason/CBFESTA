@@ -532,6 +532,7 @@ services:
         - >-
           pg_isready -U postgres -h localhost &&
           [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_authid WHERE rolname IN ('authenticator','pgbouncer','supabase_auth_admin','supabase_functions_admin','supabase_storage_admin') AND rolpassword IS NOT NULL")" = "5" ] &&
+          [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_roles WHERE rolname IN ('authenticator','supabase_storage_admin') AND pg_has_role(rolname, 'service_role', 'MEMBER')")" = "2" ] &&
           [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_namespace WHERE nspname = 'graphql_public'")" = "1" ] &&
           [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" = "1" ] &&
           [ "$(psql -h localhost -U postgres -d _supabase -tAc "SELECT count(*) FROM pg_namespace WHERE nspname IN ('_supavisor','_analytics')")" = "2" ] &&
@@ -597,7 +598,7 @@ services:
           psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION'
         fi
         psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/roles.sql
-        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'GRANT anon, authenticated, service_role TO authenticator'
+        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'GRANT anon, authenticated, service_role TO authenticator, supabase_storage_admin'
         psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/auth-ownership.sql
         psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/postgrest-schema.sql
         if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" != "1" ]; then
