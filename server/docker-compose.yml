@@ -273,6 +273,8 @@ services:
       start_period: 45s
       retries: 12
     environment:
+      # Keep the Haskell runtime within the CPU quota on small deployment plans.
+      GHCRTS: -N1
       PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS}
       PGRST_DB_MAX_ROWS: ${PGRST_DB_MAX_ROWS:-1000}
