@@ -584,6 +584,12 @@ services:
           psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION'
         fi
         psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/roles.sql
+        if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'auth' AND p.proname = 'uid'")" != "0" ]; then
+          psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'ALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin'
+        fi
+        if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'auth' AND p.proname = 'role'")" != "0" ]; then
+          psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'ALTER FUNCTION auth.role() OWNER TO supabase_auth_admin'
+        fi
         if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" != "1" ]; then
           psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/_supabase.sql
         fi
