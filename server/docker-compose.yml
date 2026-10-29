@@ -532,6 +532,7 @@ services:
         - >-
           pg_isready -U postgres -h localhost &&
           [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_authid WHERE rolname IN ('authenticator','pgbouncer','supabase_auth_admin','supabase_functions_admin','supabase_storage_admin') AND rolpassword IS NOT NULL")" = "5" ] &&
+          [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_namespace WHERE nspname = 'graphql_public'")" = "1" ] &&
           [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" = "1" ] &&
           [ "$(psql -h localhost -U postgres -d _supabase -tAc "SELECT count(*) FROM pg_namespace WHERE nspname IN ('_supavisor','_analytics')")" = "2" ] &&
           [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_namespace WHERE nspname = '_realtime'")" = "1" ]
@@ -580,6 +581,7 @@ services:
     volumes:
       - ./volumes/db/roles.sql:/init/roles.sql:ro,z
       - ./volumes/db/auth-ownership.sql:/init/auth-ownership.sql:ro,z
+      - ./volumes/db/postgrest-schema.sql:/init/postgrest-schema.sql:ro,z
       - ./volumes/db/_supabase.sql:/init/_supabase.sql:ro,z
       - ./volumes/db/pooler.sql:/init/pooler.sql:ro,z
       - ./volumes/db/logs.sql:/init/logs.sql:ro,z
@@ -596,6 +598,7 @@ services:
         fi
         psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/roles.sql
         psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/auth-ownership.sql
+        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/postgrest-schema.sql
         if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" != "1" ]; then
           psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/_supabase.sql
         fi
