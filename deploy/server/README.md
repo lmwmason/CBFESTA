@@ -36,6 +36,4 @@ The remaining required settings are in `.env.example`; generate passwords and si
 
 ## Existing data
 
-The October 18, 2026 backup has been restored and verified in the local self-hosted stack. CBGPU explicitly starts a separate deployment and does not import that local database or Storage volume. Restore the protected DB and Storage snapshot into the CBGPU instance after it is healthy, verify Auth and object reads, and only then point the frontend at the CBGPU URL. See [`server/MIGRATION.md`](../../server/MIGRATION.md).
-
-The source snapshot is the accepted baseline because no app access occurred after October 18. Keep the existing hosted project available until the remote CBGPU restore and frontend cutover are verified.
+The October 18, 2026 backup has been restored and verified in the CBGPU deployment. The production frontend has also been rebuilt with the CBGPU server URL. The source snapshot is the accepted baseline because no app access occurred after October 18. Restore counts and endpoint checks are recorded in [`server/MIGRATION.md`](../../server/MIGRATION.md).
