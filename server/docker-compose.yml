@@ -576,6 +576,9 @@ services:
       - |
         until pg_isready -h db -p "$$PGPORT" -U postgres; do sleep 2; done
         echo "Applying retained database role and schema setup"
+        if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_roles WHERE rolname = 'supabase_functions_admin'")" != "1" ]; then
+          psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION'
+        fi
         psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/roles.sql
         if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" != "1" ]; then
           psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/_supabase.sql
