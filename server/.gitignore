@@ -1,6 +1,7 @@
 volumes/db/data
 volumes/storage
-volumes/snippets
+volumes/snippets/*
+!volumes/snippets/.gitkeep
 volumes/functions/**
 !volumes/functions/deno.json*
 !volumes/functions/register/
