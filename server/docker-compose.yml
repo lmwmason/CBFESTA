@@ -89,6 +89,7 @@ services:
         condition: service_healthy
     ports:
       - ${API_GW_HTTP_PORT:-${KONG_HTTP_PORT:-8000}}:8000/tcp
+    command: ["--log-level", "warning"]
     volumes:
       - ./volumes/api/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
       - ./volumes/api/envoy/cds.yaml:/etc/envoy/cds.yaml:ro
@@ -133,6 +134,7 @@ services:
     environment:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
+      GOTRUE_LOG_LEVEL: debug
       API_EXTERNAL_URL: ${API_EXTERNAL_URL}
 
       GOTRUE_DB_DRIVER: postgres
