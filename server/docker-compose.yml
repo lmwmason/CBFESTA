@@ -268,6 +268,10 @@ services:
 
       PGRST_ADMIN_SERVER_PORT: 3001
       PGRST_ADMIN_SERVER_HOST: localhost
+      # The readiness CLI probes from inside the container; bind the API
+      # server to the container interfaces so PostgREST's readiness check
+      # can reach it reliably.
+      PGRST_SERVER_HOST: 0.0.0.0
 
       # PostgREST accepts a plain-text symmetric secret, a single JWK, or a JWKS.
       # For Podman, use either PGRST_JWT_SECRET: ${JWT_SECRET} or
