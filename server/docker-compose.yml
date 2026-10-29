@@ -634,6 +634,7 @@ services:
       POSTGRES_PORT: ${POSTGRES_PORT}
       POSTGRES_DB: ${POSTGRES_DB}
       PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGOPTIONS: "-c lock_timeout=15s -c statement_timeout=120s"
       SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
     volumes:
       - ./supabase/migrations:/migrations:ro,z
