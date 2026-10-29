@@ -4,6 +4,10 @@ dist
 *.local
 .env*
 !.env.example
+deploy/*.backup
+deploy/*.backup.*
+deploy/*.storage.zip
+deploy/backups/
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
