@@ -136,7 +136,7 @@ services:
     environment:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
-      GOTRUE_LOG_LEVEL: debug
+      GOTRUE_LOG_LEVEL: info
       API_EXTERNAL_URL: ${API_EXTERNAL_URL}
 
       GOTRUE_DB_DRIVER: postgres
@@ -579,6 +579,7 @@ services:
       JWT_EXP: ${JWT_EXPIRY}
     volumes:
       - ./volumes/db/roles.sql:/init/roles.sql:ro,z
+      - ./volumes/db/auth-ownership.sql:/init/auth-ownership.sql:ro,z
       - ./volumes/db/_supabase.sql:/init/_supabase.sql:ro,z
       - ./volumes/db/pooler.sql:/init/pooler.sql:ro,z
       - ./volumes/db/logs.sql:/init/logs.sql:ro,z
@@ -594,12 +595,7 @@ services:
           psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'CREATE USER supabase_functions_admin NOINHERIT CREATEROLE LOGIN NOREPLICATION'
         fi
         psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/roles.sql
-        if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'auth' AND p.proname = 'uid'")" != "0" ]; then
-          psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'ALTER FUNCTION auth.uid() OWNER TO supabase_auth_admin'
-        fi
-        if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'auth' AND p.proname = 'role'")" != "0" ]; then
-          psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -c 'ALTER FUNCTION auth.role() OWNER TO supabase_auth_admin'
-        fi
+        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/auth-ownership.sql
         if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" != "1" ]; then
           psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/_supabase.sql
         fi
