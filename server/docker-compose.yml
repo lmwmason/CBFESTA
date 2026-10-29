@@ -514,18 +514,19 @@ services:
       - db-config:/etc/postgresql-custom
     healthcheck:
       test:
-        [
-        "CMD",
-        "pg_isready",
-        "-U",
-        "postgres",
-        "-h",
-        "localhost"
-        ]
+        - CMD-SHELL
+        - >-
+          pg_isready -U postgres -h localhost &&
+          [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_authid WHERE rolname IN ('authenticator','pgbouncer','supabase_auth_admin','supabase_functions_admin','supabase_storage_admin') AND rolpassword IS NOT NULL")" = "5" ] &&
+          [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" = "1" ] &&
+          [ "$(psql -h localhost -U postgres -d _supabase -tAc "SELECT count(*) FROM pg_namespace WHERE nspname IN ('_supavisor','_analytics')")" = "2" ] &&
+          [ "$(psql -h localhost -U postgres -d postgres -tAc "SELECT count(*) FROM pg_namespace WHERE nspname = '_realtime'")" = "1" ]
       interval: 5s
       timeout: 5s
-      retries: 10
+      start_period: 30s
+      retries: 12
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_HOST: /var/run/postgresql
       PGPORT: ${POSTGRES_PORT}
       POSTGRES_PORT: ${POSTGRES_PORT}
@@ -542,6 +543,54 @@ services:
         "-c",
         "log_min_messages=fatal" # prevents Realtime polling queries from appearing in logs
       ]
+
+  # The deployment platform may retain a database volume after an interrupted
+  # first boot, which skips docker-entrypoint-initdb.d. Reapply the idempotent
+  # role/schema setup before the database healthcheck lets services start.
+  db-bootstrap:
+    image: supabase/postgres:17.6.1.136
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_started
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT}
+      PGPORT: ${POSTGRES_PORT}
+      PGHOST: db
+      PGUSER: postgres
+      PGDATABASE: postgres
+      JWT_EXP: ${JWT_EXPIRY}
+    volumes:
+      - ./volumes/db/roles.sql:/init/roles.sql:ro,z
+      - ./volumes/db/_supabase.sql:/init/_supabase.sql:ro,z
+      - ./volumes/db/pooler.sql:/init/pooler.sql:ro,z
+      - ./volumes/db/logs.sql:/init/logs.sql:ro,z
+      - ./volumes/db/jwt.sql:/init/jwt.sql:ro,z
+      - ./volumes/db/realtime.sql:/init/realtime.sql:ro,z
+    command:
+      - /bin/sh
+      - -ec
+      - |
+        until pg_isready -h db -p "$$PGPORT" -U postgres; do sleep 2; done
+        echo "Applying retained database role and schema setup"
+        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/roles.sql
+        if [ "$(psql -h db -p "$$PGPORT" -U postgres -d postgres -tAc "SELECT count(*) FROM pg_database WHERE datname = '_supabase'")" != "1" ]; then
+          psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/_supabase.sql
+        fi
+        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/pooler.sql
+        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/logs.sql
+        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/jwt.sql
+        psql -h db -p "$$PGPORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -f /init/realtime.sql
+        touch /tmp/bootstrap.done
+        exec tail -f /dev/null
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/bootstrap.done"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
 
   # Update the DATABASE_URL if you are using an external Postgres database
   supavisor:
