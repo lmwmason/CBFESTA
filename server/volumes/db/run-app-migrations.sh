@@ -10,6 +10,9 @@ psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U postgres -d "${POSTGRES_DB}"
   -c 'CREATE SCHEMA IF NOT EXISTS supabase_migrations' \
   -c 'CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (version text PRIMARY KEY, statements text[], name text, created_by text, idempotency_key text, rollback text[])'
 
+psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U postgres -d "${POSTGRES_DB}" \
+  -v ON_ERROR_STOP=1 -f /init/rls-auto-enable.sql
+
 for migration in /migrations/*.sql; do
   [ -f "${migration}" ] || continue
   filename=${migration##*/}
@@ -20,8 +23,12 @@ for migration in /migrations/*.sql; do
     "SELECT count(*) FROM supabase_migrations.schema_migrations WHERE version = '${version}'")
   if [ "${applied}" = "0" ]; then
     echo "Applying application migration ${version}"
+    if [ "${version}" = "20260925053403" ]; then
+      psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U postgres -d "${POSTGRES_DB}" \
+        -v ON_ERROR_STOP=1 -c 'DROP INDEX IF EXISTS public.festivals_created_by_idx'
+    fi
     psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U postgres -d "${POSTGRES_DB}" \
-      -v ON_ERROR_STOP=1 -f "${migration}"
+      --single-transaction -v ON_ERROR_STOP=1 -f "${migration}"
     psql -h "${POSTGRES_HOST}" -p "${POSTGRES_PORT}" -U postgres -d "${POSTGRES_DB}" \
       -v ON_ERROR_STOP=1 -c "INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES ('${version}', '${name}')"
   fi
